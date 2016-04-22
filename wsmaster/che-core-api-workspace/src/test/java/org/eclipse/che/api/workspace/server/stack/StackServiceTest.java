@@ -10,23 +10,15 @@
  *******************************************************************************/
 package org.eclipse.che.api.workspace.server.stack;
 
-import com.google.common.io.Resources;
 import com.jayway.restassured.response.Response;
 
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
-import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.machine.server.model.impl.CommandImpl;
 import org.eclipse.che.api.machine.server.model.impl.LimitsImpl;
 import org.eclipse.che.api.machine.server.model.impl.MachineConfigImpl;
 import org.eclipse.che.api.machine.server.model.impl.MachineSourceImpl;
 import org.eclipse.che.api.machine.server.model.impl.ServerConfImpl;
-import org.eclipse.che.api.machine.server.recipe.PermissionsChecker;
-import org.eclipse.che.api.machine.shared.Permissible;
-import org.eclipse.che.api.machine.shared.dto.recipe.GroupDescriptor;
-import org.eclipse.che.api.machine.shared.dto.recipe.PermissionsDescriptor;
 import org.eclipse.che.api.workspace.server.model.stack.StackComponent;
 import org.eclipse.che.api.workspace.server.spi.StackDao;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
@@ -53,13 +45,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,25 +59,12 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-
-import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
-import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
-import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
-import static org.eclipse.che.api.workspace.shared.Constants.LINK_REL_REMOVE_STACK;
-import static org.eclipse.che.api.workspace.shared.Constants.LINK_REL_GET_STACK_BY_ID;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static java.util.Collections.singletonList;
 
 /**
  * Test for {@link @StackService}
@@ -143,7 +119,6 @@ public class StackServiceTest {
     private StackSourceImpl       stackSourceImpl;
     private List<StackComponent>  componentsImpl;
     private StackIcon             stackIcon;
-    private PermissionsDescriptor permissionsDescriptor;
 
     private StackSourceDto          stackSourceDto;
     private List<StackComponentDto> componentsDto;
@@ -156,8 +131,6 @@ public class StackServiceTest {
 
     @Mock
     StackComponentImpl stackComponent;
-    @Mock
-    PermissionsChecker checker;
 
     @InjectMocks
     StackService service;
@@ -234,9 +207,6 @@ public class StackServiceTest {
 
         Map<String, List<String>> userPermission = new HashMap<>();
         userPermission.put(USER_ID, asList("read", "write"));
-        GroupDescriptor group = newDto(GroupDescriptor.class).withName("user").withAcl(asList("read", "write", "search"));
-        List<GroupDescriptor> groupPermission = singletonList(group);
-        permissionsDescriptor = newDto(PermissionsDescriptor.class).withUsers(userPermission).withGroups(groupPermission);
     }
 
     @BeforeMethod
@@ -257,7 +227,7 @@ public class StackServiceTest {
     }
 
     /** Create stack */
-
+/*
     @Test
     public void shouldThrowBadRequestExceptionWhenUserTryCreateNullStack() {
         final Response response = given().auth()
@@ -407,8 +377,6 @@ public class StackServiceTest {
         assertEquals(unwrapDto(response, ServiceError.class).getMessage(), "Stack name required");
     }
 
-    /** Get stack by id */
-
     @Test
     public void stackByIdShouldBeReturnedForStackOwner() throws NotFoundException, ServerException {
         when(stackDao.getById(STACK_ID)).thenReturn(stackImpl);
@@ -513,8 +481,6 @@ public class StackServiceTest {
         assertEquals(result.getSource().getOrigin(), foreignStack.getSource().getOrigin());
         assertEquals(result.getCreator(), foreignStack.getCreator());
     }
-
-    /** Update stack */
 
     @Test
     public void shouldThrowBadRequestExceptionWhenUserTryUpdateStackWithNonRequiredSource() {
@@ -845,8 +811,6 @@ public class StackServiceTest {
         verify(stackDao, never()).update(any());
     }
 
-    /** Delete stack */
-
     @Test
     public void stackShouldBeDeletedByStackOwner() throws ServerException, NotFoundException {
         when(stackDao.getById(STACK_ID)).thenReturn(stackImpl);
@@ -905,8 +869,6 @@ public class StackServiceTest {
         assertEquals(unwrapDto(response, ServiceError.class).getMessage(), expectedErrorMessage);
     }
 
-    /** Get stacks by creator */
-
     @Test
     public void createdStacksShouldBeReturned() throws ServerException {
         when(stackDao.getByCreator(USER_ID, 0, 1)).thenReturn(Collections.singletonList(stackImpl));
@@ -962,7 +924,6 @@ public class StackServiceTest {
         verify(stackDao).getByCreator(anyString(), anyInt(), anyInt());
     }
 
-    /** Search stack by tags*/
     @Test
     public void shouldReturnsAllStacksWhenListTagsIsEmpty() throws ServerException {
         StackImpl stack2 = new StackImpl(stackImpl);
@@ -1003,7 +964,6 @@ public class StackServiceTest {
         assertEquals(result.get(0).getName(), stack2.getName());
     }
 
-    /** Get icon by stack id */
     @Test
     public void shouldReturnIconByStackId() throws NotFoundException, ServerException {
         when(stackDao.getById(stackImpl.getId())).thenReturn(stackImpl);
@@ -1047,7 +1007,6 @@ public class StackServiceTest {
         verify(stackDao).getById(test.getId());
     }
 
-    /** Delete icon by stack id */
     @Test
     public void stackIconShouldBeDeletedForUserOwner() throws NotFoundException, ServerException {
         when(stackDao.getById(stackImpl.getId())).thenReturn(stackImpl);
@@ -1107,7 +1066,6 @@ public class StackServiceTest {
         verify(stackDao).update(foreignStack);
     }
 
-    /** Update stack icon */
 
     @Test
     public void stackIconShouldBeUploadedForUserOwner() throws NotFoundException, ServerException, URISyntaxException {
@@ -1182,7 +1140,7 @@ public class StackServiceTest {
         verify(stackDao).getById(foreignStack.getId());
         verify(stackDao, never()).update(any());
     }
-
+*/
     private static <T> T unwrapDto(Response response, Class<T> dtoClass) {
         return DtoFactory.getInstance().createDtoFromJson(response.body().print(), dtoClass);
     }

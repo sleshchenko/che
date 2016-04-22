@@ -23,11 +23,7 @@ import org.eclipse.che.api.core.model.machine.Recipe;
 import org.eclipse.che.api.core.model.project.ProjectConfig;
 import org.eclipse.che.api.core.model.workspace.Environment;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
-import org.eclipse.che.api.machine.server.recipe.adapters.GroupAdapter;
-import org.eclipse.che.api.machine.server.recipe.adapters.PermissionsAdapter;
 import org.eclipse.che.api.machine.server.recipe.adapters.RecipeTypeAdapter;
-import org.eclipse.che.api.machine.shared.Group;
-import org.eclipse.che.api.machine.shared.Permissions;
 import org.eclipse.che.api.workspace.server.model.stack.Stack;
 import org.eclipse.che.api.workspace.server.model.stack.StackComponent;
 import org.eclipse.che.api.workspace.server.model.stack.StackSource;
@@ -74,8 +70,6 @@ public class StackTypeAdaptersProvider {
         adapters.put(MachineSource.class, new MachineSourceAdapter());
         adapters.put(MachineConfig.class, new MachineConfigAdapter());
         adapters.put(StackSource.class, new StackSourceAdapter());
-        adapters.put(Permissions.class, new PermissionsAdapter());
-        adapters.put(Group.class, new GroupAdapter());
         adapters.put(StackIcon.class, new StackIconAdapter());
 
         GsonBuilder gsonBuilder = new GsonBuilder();

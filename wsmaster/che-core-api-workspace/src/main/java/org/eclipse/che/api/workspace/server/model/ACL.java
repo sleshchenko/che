@@ -8,19 +8,15 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.api.machine.shared;
+package org.eclipse.che.api.workspace.server.model;
 
-import org.eclipse.che.api.machine.server.recipe.PermissionsChecker;
+import java.util.List;
 
 /**
- * Permissible interface should be implemented by data objects which require access.
- * It is commonly used with the {@link PermissionsChecker}.
- *
- * @author Alexander Andrienko
+ * @author Sergii Leschenko
  */
-public interface Permissible {
-    /**
-     * Returns {@link Permissions} for access to the data object.
-     */
-    Permissions getPermissions();
+public interface Acl {
+    String getUser();
+
+    List<String> getActions();
 }

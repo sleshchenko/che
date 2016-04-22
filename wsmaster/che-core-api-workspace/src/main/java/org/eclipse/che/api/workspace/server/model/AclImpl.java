@@ -8,34 +8,29 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.api.machine.shared.dto.recipe;
-
-import org.eclipse.che.api.machine.shared.Group;
-import org.eclipse.che.dto.shared.DTO;
+package org.eclipse.che.api.workspace.server.model;
 
 import java.util.List;
 
 /**
- * @author Eugene Voevodin
+ * @author Sergii Leschenko
  */
-@DTO
-public interface GroupDescriptor extends Group {
+public class AclImpl implements Acl {
+    private final String user;
+    private final List<String>     actions;
 
-    String getName();
+    public AclImpl(String user, List<String> actions) {
+        this.user = user;
+        this.actions = actions;
+    }
 
-    void setName(String name);
+    @Override
+    public String getUser() {
+        return user;
+    }
 
-    GroupDescriptor withName(String name);
-
-    String getUnit();
-
-    void setUnit(String unit);
-
-    GroupDescriptor withUnit(String unit);
-
-    List<String> getAcl();
-
-    void setAcl(List<String> acl);
-
-    GroupDescriptor withAcl(List<String> acl);
+    @Override
+    public List<String> getActions() {
+        return actions;
+    }
 }

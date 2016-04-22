@@ -12,8 +12,6 @@ package org.eclipse.che.api.machine.server.recipe;
 
 import org.eclipse.che.api.core.model.machine.Recipe;
 import org.eclipse.che.api.machine.shared.ManagedRecipe;
-import org.eclipse.che.api.machine.shared.Permissions;
-import org.eclipse.che.api.machine.shared.dto.recipe.RecipeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,29 +24,16 @@ import java.util.Objects;
  */
 public class RecipeImpl implements ManagedRecipe {
 
-    public static RecipeImpl fromDescriptor(RecipeDescriptor descriptor) {
-        final RecipeImpl recipe = new RecipeImpl().withId(descriptor.getId())
-                                                  .withName(descriptor.getName())
-                                                  .withType(descriptor.getType())
-                                                  .withScript(descriptor.getScript())
-                                                  .withTags(descriptor.getTags())
-                                                  .withCreator(descriptor.getCreator());
-        if (descriptor.getPermissions() != null) {
-            recipe.setPermissions(PermissionsImpl.fromDescriptor(descriptor.getPermissions()));
-        }
-        return recipe;
-    }
-
     private String       id;
     private String       name;
     private String       creator;
     private String       type;
     private String       script;
     private List<String> tags;
-    private Permissions  permissions;
     private String       description;
 
-    public RecipeImpl() {}
+    public RecipeImpl() {
+    }
 
     public RecipeImpl(Recipe recipe) {
         this.script = recipe.getScript();
@@ -143,20 +128,6 @@ public class RecipeImpl implements ManagedRecipe {
     }
 
     @Override
-    public Permissions getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(Permissions permissions) {
-        this.permissions = permissions;
-    }
-
-    public RecipeImpl withPermissions(Permissions permissions) {
-        this.permissions = permissions;
-        return this;
-    }
-
-    @Override
     public String getDescription() {
         return description;
     }
@@ -184,7 +155,6 @@ public class RecipeImpl implements ManagedRecipe {
                Objects.equals(creator, other.creator) &&
                Objects.equals(type, other.type) &&
                Objects.equals(script, other.script) &&
-               Objects.equals(permissions, other.permissions) &&
                Objects.equals(description, other.description) &&
                getTags().equals(other.getTags());
     }
@@ -197,7 +167,6 @@ public class RecipeImpl implements ManagedRecipe {
         hash = 31 * hash + Objects.hashCode(creator);
         hash = 31 * hash + Objects.hashCode(type);
         hash = 31 * hash + Objects.hashCode(script);
-        hash = 31 * hash + Objects.hashCode(permissions);
         hash = 31 * hash + Objects.hashCode(description);
         hash = 31 * hash + getTags().hashCode();
         return hash;
@@ -212,7 +181,6 @@ public class RecipeImpl implements ManagedRecipe {
                ", type='" + type + '\'' +
                ", script='" + script + '\'' +
                ", tags=" + tags +
-               ", permissions=" + permissions +
                ", description='" + description + '\'' +
                '}';
     }

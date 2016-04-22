@@ -11,10 +11,6 @@
 package org.eclipse.che.api.workspace.server.model.impl.stack;
 
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
-import org.eclipse.che.api.machine.server.recipe.GroupImpl;
-import org.eclipse.che.api.machine.server.recipe.PermissionsImpl;
-import org.eclipse.che.api.machine.shared.Group;
-import org.eclipse.che.api.machine.shared.Permissions;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.stack.Stack;
 import org.eclipse.che.api.workspace.server.model.stack.StackComponent;
@@ -26,7 +22,6 @@ import org.eclipse.che.commons.lang.NameGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -47,7 +42,6 @@ public class StackImpl implements Stack {
     private WorkspaceConfigImpl      workspaceConfig;
     private StackSourceImpl          source;
     private List<StackComponentImpl> components;
-    private PermissionsImpl          permissions;
     private StackIcon                stackIcon;
 
     public static StackBuilder builder() {
@@ -64,7 +58,6 @@ public class StackImpl implements Stack {
              stack.getWorkspaceConfig(),
              stack.getSource(),
              stack.getComponents(),
-             stack.getPermissions(),
              stack.getStackIcon());
     }
 
@@ -78,7 +71,6 @@ public class StackImpl implements Stack {
              stack.getWorkspaceConfig(),
              stack.getSource(),
              stack.getComponents(),
-             stack.getPermissions(),
              null);
     }
 
@@ -91,7 +83,6 @@ public class StackImpl implements Stack {
                      @Nullable WorkspaceConfig workspaceConfig,
                      @Nullable StackSource source,
                      @Nullable List<? extends StackComponent> components,
-                     @Nullable Permissions permissions,
                      @Nullable StackIcon stackIcon) {
         this.id = requireNonNull(id, "Required non-null stack id");
         this.creator = requireNonNull(creator, "Required non-null stack creator");
@@ -100,14 +91,6 @@ public class StackImpl implements Stack {
         setTags(tags);
         setWorkspaceConfig(workspaceConfig == null ? null : new WorkspaceConfigImpl(workspaceConfig));
         setSource(source == null ? null : new StackSourceImpl(source));
-
-        if (permissions != null) {
-            List<Group> groups = permissions.getGroups()
-                                            .stream()
-                                            .map(group -> new GroupImpl(group.getName(), group.getUnit(), group.getAcl()))
-                                            .collect(Collectors.toList());
-            this.permissions = new PermissionsImpl(permissions.getUsers(), groups);
-        }
 
         this.stackIcon = stackIcon;
         this.description = description;
@@ -209,15 +192,6 @@ public class StackImpl implements Stack {
         this.components = components;
     }
 
-    public void setPermissions(PermissionsImpl permissions) {
-        this.permissions = permissions;
-    }
-
-    @Override
-    public PermissionsImpl getPermissions() {
-        return permissions;
-    }
-
     public StackIcon getStackIcon() {
         return stackIcon;
     }
@@ -244,7 +218,6 @@ public class StackImpl implements Stack {
                getComponents().equals(other.getComponents()) &&
                Objects.equals(workspaceConfig, other.workspaceConfig) &&
                Objects.equals(source, other.source) &&
-               Objects.equals(permissions, other.permissions) &&
                Objects.equals(stackIcon, other.stackIcon);
     }
 
@@ -260,7 +233,6 @@ public class StackImpl implements Stack {
         hash = 31 * hash + getComponents().hashCode();
         hash = 31 * hash + Objects.hashCode(workspaceConfig);
         hash = 31 * hash + Objects.hashCode(source);
-        hash = 31 * hash + Objects.hashCode(permissions);
         hash = 31 * hash + Objects.hashCode(stackIcon);
         return hash;
     }
@@ -276,7 +248,6 @@ public class StackImpl implements Stack {
                "', workspaceConfig='" + workspaceConfig +
                "', stackSource='" + source +
                "', components='" + components +
-               "', permission='" + permissions +
                "', stackIcon='" + stackIcon +
                "'}";
     }
@@ -292,7 +263,6 @@ public class StackImpl implements Stack {
         private WorkspaceConfig                workspaceConfig;
         private StackSource                    source;
         private List<? extends StackComponent> components;
-        private Permissions                    permissions;
         private StackIcon                      stackIcon;
 
         public StackBuilder generateId() {
@@ -345,18 +315,13 @@ public class StackImpl implements Stack {
             return this;
         }
 
-        public StackBuilder setPermissions(Permissions permissions) {
-            this.permissions = permissions;
-            return this;
-        }
-
         public StackBuilder setStackIcon(StackIcon stackIcon) {
             this.stackIcon = stackIcon;
             return this;
         }
 
         public StackImpl build() {
-            return new StackImpl(id, name, description, scope, creator, tags, workspaceConfig, source, components, permissions, stackIcon);
+            return new StackImpl(id, name, description, scope, creator, tags, workspaceConfig, source, components, stackIcon);
         }
     }
 }
