@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.che.api.machine.server.recipe;
 
+import org.eclipse.che.api.core.acl.AclEntryImpl;
 import org.eclipse.che.api.core.model.machine.Recipe;
 import org.eclipse.che.api.machine.shared.ManagedRecipe;
 
@@ -24,13 +25,14 @@ import java.util.Objects;
  */
 public class RecipeImpl implements ManagedRecipe {
 
-    private String       id;
-    private String       name;
-    private String       creator;
-    private String       type;
-    private String       script;
-    private List<String> tags;
-    private String       description;
+    private String             id;
+    private String             name;
+    private String             creator;
+    private String             type;
+    private String             script;
+    private List<String>       tags;
+    private String             description;
+    private List<AclEntryImpl> acl;
 
     public RecipeImpl() {
     }
@@ -141,6 +143,22 @@ public class RecipeImpl implements ManagedRecipe {
         return this;
     }
 
+    public List<AclEntryImpl> getAcl() {
+        if (acl == null) {
+            acl = new ArrayList<>();
+        }
+        return acl;
+    }
+
+    public void setAcl(List<AclEntryImpl> acl) {
+        this.acl = acl;
+    }
+
+    public RecipeImpl withAcl(List<AclEntryImpl> acl) {
+        this.acl = acl;
+        return this;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -156,7 +174,8 @@ public class RecipeImpl implements ManagedRecipe {
                Objects.equals(type, other.type) &&
                Objects.equals(script, other.script) &&
                Objects.equals(description, other.description) &&
-               getTags().equals(other.getTags());
+               getTags().equals(other.getTags()) &&
+               Objects.equals(getAcl(), other.getAcl());
     }
 
     @Override
@@ -169,6 +188,7 @@ public class RecipeImpl implements ManagedRecipe {
         hash = 31 * hash + Objects.hashCode(script);
         hash = 31 * hash + Objects.hashCode(description);
         hash = 31 * hash + getTags().hashCode();
+        hash = 31 * hash + getAcl().hashCode();
         return hash;
     }
 
@@ -182,6 +202,7 @@ public class RecipeImpl implements ManagedRecipe {
                ", script='" + script + '\'' +
                ", tags=" + tags +
                ", description='" + description + '\'' +
+               ", acl=" + acl +
                '}';
     }
 }

@@ -8,29 +8,15 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.api.workspace.server.model;
+package org.eclipse.che.api.core.acl;
 
 import java.util.List;
 
 /**
  * @author Sergii Leschenko
  */
-public class AclImpl implements Acl {
-    private final String user;
-    private final List<String>     actions;
+public interface AclEntry {
+    String getUser();
 
-    public AclImpl(String user, List<String> actions) {
-        this.user = user;
-        this.actions = actions;
-    }
-
-    @Override
-    public String getUser() {
-        return user;
-    }
-
-    @Override
-    public List<String> getActions() {
-        return actions;
-    }
+    List<String> getActions();
 }

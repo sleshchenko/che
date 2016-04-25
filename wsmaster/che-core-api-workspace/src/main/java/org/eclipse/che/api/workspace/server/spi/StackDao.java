@@ -13,7 +13,7 @@ package org.eclipse.che.api.workspace.server.spi;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.workspace.server.model.AclImpl;
+import org.eclipse.che.api.core.acl.AclEntryImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.commons.annotation.Nullable;
 
@@ -134,11 +134,11 @@ public interface StackDao {
      */
     List<StackImpl> searchStacks(@Nullable List<String> tags, int skipCount, int maxItems) throws ServerException;
 
-    void storeACL(String stack, AclImpl acl) throws ServerException;
+    void storeACL(String stack, AclEntryImpl acl) throws ServerException;
 
     void removeACL(String stack, String user) throws ServerException;
 
-    List<AclImpl> getACLs(String stack) throws ServerException;
+    List<AclEntryImpl> getACLs(String stack) throws ServerException;
 
-    AclImpl getACL(String stack, String user) throws ServerException, NotFoundException;
+    AclEntryImpl getACL(String stack, String user) throws ServerException, NotFoundException;
 }

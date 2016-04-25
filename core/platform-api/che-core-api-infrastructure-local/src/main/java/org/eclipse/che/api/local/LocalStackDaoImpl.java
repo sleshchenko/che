@@ -16,7 +16,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.local.storage.stack.StackLocalStorage;
-import org.eclipse.che.api.workspace.server.model.AclImpl;
+import org.eclipse.che.api.core.acl.AclEntryImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.api.workspace.server.model.stack.Stack;
 import org.eclipse.che.api.workspace.server.spi.StackDao;
@@ -158,7 +158,7 @@ public class LocalStackDaoImpl implements StackDao {
     }
 
     @Override
-    public void storeACL(String stack, AclImpl acl) throws ServerException {
+    public void storeACL(String stack, AclEntryImpl acl) throws ServerException {
         //stub
     }
 
@@ -168,13 +168,13 @@ public class LocalStackDaoImpl implements StackDao {
     }
 
     @Override
-    public List<AclImpl> getACLs(String stack) throws ServerException {
+    public List<AclEntryImpl> getACLs(String stack) throws ServerException {
         //stub
         return Collections.emptyList();
     }
 
     @Override
-    public AclImpl getACL(String stack, String user) throws ServerException, NotFoundException {
+    public AclEntryImpl getACL(String stack, String user) throws ServerException, NotFoundException {
         //stub
         return null;
     }
