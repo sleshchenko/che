@@ -20,18 +20,16 @@ import org.eclipse.che.api.promises.client.Function;
 import org.eclipse.che.api.promises.client.FunctionException;
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper.RequestCall;
-import org.eclipse.che.ide.dto.DtoFactory;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.rest.AsyncRequestFactory;
 import org.eclipse.che.ide.rest.DtoUnmarshallerFactory;
 import org.eclipse.che.ide.rest.RestContext;
 import org.eclipse.che.ide.rest.StringUnmarshaller;
-
-import javax.validation.constraints.NotNull;
-
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.ui.loaders.request.LoaderFactory;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.google.gwt.http.client.RequestBuilder.DELETE;
@@ -128,7 +126,7 @@ public class RecipeServiceClientImpl implements RecipeServiceClient {
         return newPromise(new RequestCall<List<RecipeDescriptor>>() {
             @Override
             public void makeCall(AsyncCallback<List<RecipeDescriptor>> callback) {
-                getRecipes(0, -1, callback);
+                searchRecipes(Collections.<String>emptyList(), null, 0, -1, callback);
             }
         }).then(new Function<List<RecipeDescriptor>, List<RecipeDescriptor>>() {
             @Override
@@ -140,38 +138,6 @@ public class RecipeServiceClientImpl implements RecipeServiceClient {
                 return descriptors;
             }
         });
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Promise<List<RecipeDescriptor>> getRecipes(final int skipCount, final int maxItems) {
-        return newPromise(new RequestCall<List<RecipeDescriptor>>() {
-            @Override
-            public void makeCall(AsyncCallback<List<RecipeDescriptor>> callback) {
-                getRecipes(skipCount, maxItems, callback);
-            }
-        }).then(new Function<List<RecipeDescriptor>, List<RecipeDescriptor>>() {
-            @Override
-            public List<RecipeDescriptor> apply(List<RecipeDescriptor> arg) throws FunctionException {
-                final ArrayList<RecipeDescriptor> descriptors = new ArrayList<>();
-                for (RecipeDescriptor descriptor : arg) {
-                    descriptors.add(descriptor);
-                }
-                return descriptors;
-            }
-        });
-    }
-
-    private void getRecipes(int skipCount, int maxItems, @NotNull AsyncCallback<List<RecipeDescriptor>> callback) {
-        String url = baseHttpUrl + "/list?skipCount=" + skipCount;
-        if (maxItems > 0) {
-            url += "&maxItems=" + maxItems;
-        }
-
-        asyncRequestFactory.createGetRequest(url)
-                           .header(ACCEPT, APPLICATION_JSON)
-                           .loader(loaderFactory.newLoader("Getting recipes..."))
-                           .send(newCallback(callback, dtoUnmarshallerFactory.newListUnmarshaller(RecipeDescriptor.class)));
     }
 
     /** {@inheritDoc} */

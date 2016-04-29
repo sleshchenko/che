@@ -15,10 +15,6 @@ import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.api.local.storage.stack.StackLocalStorage;
-import org.eclipse.che.api.machine.server.recipe.GroupImpl;
-import org.eclipse.che.api.machine.server.recipe.PermissionsImpl;
-import org.eclipse.che.api.machine.shared.Group;
-import org.eclipse.che.api.machine.shared.Permissions;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackSourceImpl;
@@ -120,11 +116,6 @@ public class LocalStackDaoTest {
         Map<String, List<String>> users = new HashMap<>();
         users.put("user", asList("read", "write"));
 
-        Group userGroup = new GroupImpl("user", null, asList("read", "write", "search"));
-        Group adminGroup = new GroupImpl("system/admin", null, asList("read", "write", "search"));
-        Group managerGroup = new GroupImpl("system/manager", null, asList("read", "write", "search"));
-        Permissions permissions = new PermissionsImpl(users, asList(userGroup, adminGroup, managerGroup));
-
         StackIcon stackIcon = new StackIcon("java-type.svg", "image/svg+xml", SVG_ICON.getBytes());
         List<StackComponentImpl> components = asList(javaComponent, mavenComponent);
         return StackImpl.builder().setId("stackdskhfdskf")
@@ -135,7 +126,6 @@ public class LocalStackDaoTest {
                                   .setTags(asList("java", "maven"))
                                   .setSource(stackSource)
                                   .setComponents(components)
-                                  .setPermissions(permissions)
                                   .setStackIcon(stackIcon)
                                   .build();
     }
