@@ -12,6 +12,7 @@ package org.eclipse.che.api.workspace.server.spi.tck;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
@@ -36,9 +37,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -57,10 +58,17 @@ public class WorkspaceDaoTest {
 
     public static final String SUITE_NAME = "WorkspaceDaoTck";
 
-    private static final int COUNT_OF_WORKSPACES = 5;
+    private static final int COUNT_OF_ACCOUNTS               = 2;
+    // N workspaces share 1 namespace
+    private static final int COUNT_OF_WORKSPACES_PER_ACCOUNT = 2;
+    private static final int COUNT_OF_WORKSPACES             = COUNT_OF_ACCOUNTS * COUNT_OF_WORKSPACES_PER_ACCOUNT;
+
 
     @Inject
     private TckRepository<WorkspaceImpl> workspaceRepo;
+
+    @Inject
+    private TckRepository<AccountImpl> accountRepo;
 
     @Inject
     private WorkspaceDao workspaceDao;
@@ -70,15 +78,23 @@ public class WorkspaceDaoTest {
     @AfterMethod
     public void removeEntities() throws TckRepositoryException {
         workspaceRepo.removeAll();
+        accountRepo.removeAll();
     }
 
     @BeforeMethod
     public void createEntities() throws TckRepositoryException {
+        AccountImpl[] accounts = new AccountImpl[COUNT_OF_ACCOUNTS];
+
+        for (int i = 0; i < COUNT_OF_ACCOUNTS; i++) {
+            accounts[i] = new TestAccountImpl("id-" + i, "namespace-" + i);
+        }
+
         workspaces = new WorkspaceImpl[COUNT_OF_WORKSPACES];
         for (int i = 0; i < COUNT_OF_WORKSPACES; i++) {
-            // 2 workspaces share 1 namespace
-            workspaces[i] = createWorkspace("workspace-" + i, "namespace-" + i / 2, "name-" + i);
+            workspaces[i] = createWorkspace("workspace-" + i, "namespace-" + i / COUNT_OF_WORKSPACES_PER_ACCOUNT, "name-" + i);
         }
+        accountRepo.createAll(asList(accounts));
+
         workspaceRepo.createAll(asList(workspaces));
     }
 
@@ -178,13 +194,14 @@ public class WorkspaceDaoTest {
         workspaceDao.remove(null);
     }
 
-    @Test(dependsOnMethods = "shouldGetWorkspaceById")
+    @Test(dependsOnMethods = {"shouldGetWorkspaceById", "shouldRemoveWorkspace"})
     public void shouldCreateWorkspace() throws Exception {
-        final WorkspaceImpl workspace = createWorkspace("new-workspace", "new-namespace", "new-name");
+        final WorkspaceImpl workspace = workspaces[0];
+        workspaceDao.remove(workspace.getId());
 
         workspaceDao.create(workspace);
 
-        assertEquals(workspaceDao.get(workspace.getId()), new WorkspaceImpl(workspace));
+        assertEquals(workspaceDao.get(workspace.getId()), workspace);
     }
 
     @Test(expectedExceptions = ConflictException.class)
@@ -199,7 +216,7 @@ public class WorkspaceDaoTest {
     @Test
     public void shouldCreateWorkspaceWithNameWhichDoesNotExistInGivenNamespace() throws Exception {
         final WorkspaceImpl workspace = workspaces[0];
-        final WorkspaceImpl workspace2 = workspaces[4];
+        final WorkspaceImpl workspace2 = workspaces[2];
 
         final WorkspaceImpl newWorkspace = createWorkspace("new-id", workspace.getNamespace(), workspace2.getName());
 
@@ -320,7 +337,7 @@ public class WorkspaceDaoTest {
 
         // Update workspace object
         workspace.setName("new-name");
-        workspace.setNamespace("new-namespace");
+        workspace.setNamespace(workspaces[2].getNamespace());
         workspace.getAttributes().clear();
 
         workspaceDao.update(workspace);

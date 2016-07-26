@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.che.api.workspace.server.model.impl;
 
+import org.eclipse.che.account.spi.AccountImpl;
+
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.WorkspaceRuntime;
@@ -24,6 +26,8 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -68,6 +72,10 @@ public class WorkspaceImpl implements Workspace {
 
     @Column(nullable = false)
     private String namespace;
+
+    @ManyToOne
+    @JoinColumn(name = "namespace", insertable = false, updatable = false, referencedColumnName = "name")
+    private AccountImpl account;
 
     @Column(nullable = false)
     private String name;

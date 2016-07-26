@@ -14,6 +14,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.persist.Transactional;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.machine.server.model.impl.AclEntryImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -43,6 +44,7 @@ public class WorkspaceTckModule extends TckModule {
         bind(org.eclipse.che.api.core.h2.jdbc.jpa.eclipselink.H2ExceptionHandler.class);
 
         bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new JpaTckRepository<>(WorkspaceImpl.class));
+        bind(new TypeLiteral<TckRepository<AccountImpl>>() {}).toInstance(new JpaTckRepository<>(AccountImpl.class));
         bind(new TypeLiteral<TckRepository<StackImpl>>() {}).to(StackTckRepository.class);
 
         bind(WorkspaceDao.class).to(JpaWorkspaceDao.class);

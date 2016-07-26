@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.che.api.user.server.model.impl;
 
+import org.eclipse.che.account.spi.AccountImpl;
+
 import org.eclipse.che.api.core.model.user.User;
 
 import javax.persistence.Basic;
@@ -17,7 +19,6 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -48,16 +49,12 @@ import java.util.Objects;
                             query = "SELECT u FROM \"User\" u WHERE u.email = :email")
         }
 )
-public class UserImpl implements User {
+public class UserImpl extends AccountImpl implements User {
 
-    @Id
-    private String id;
+    public static final String PERSONAL_ACCOUNT = "personal";
 
     @Column(unique = true, nullable = false)
     private String email;
-
-    @Column(unique = true, nullable = false)
-    private String name;
 
     @Basic
     private String password;
@@ -120,6 +117,11 @@ public class UserImpl implements User {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getType() {
+        return PERSONAL_ACCOUNT;
     }
 
     public void setName(String name) {
