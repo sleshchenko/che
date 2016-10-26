@@ -105,7 +105,7 @@ public class TckListener implements IInvokedMethodListener {
 
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult result) {
-        if (hasTckListener(result.getTestClass().getRealClass())) {
+        if (hasTckListenerAnnotation(result.getTestClass().getRealClass())) {
             final String name = result.getTestClass().getRealClass().getName();
             synchronized (injected) {
                 if (!injected.contains(name)) {
@@ -135,7 +135,7 @@ public class TckListener implements IInvokedMethodListener {
         return new CompoundModule(testContext, moduleIterator);
     }
 
-    private boolean hasTckListener(Class<?> clazz) {
+    private boolean hasTckListenerAnnotation(Class<?> clazz) {
         Listeners listeners = clazz.getAnnotation(Listeners.class);
         if (listeners == null) {
             return false;
