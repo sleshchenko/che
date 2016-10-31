@@ -22,8 +22,10 @@ import org.testng.ITestNGListener;
 import org.testng.ITestResult;
 import org.testng.annotations.Listeners;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -99,20 +101,25 @@ import static java.lang.String.format;
  * @see org.testng.annotations.Listeners
  * @see org.testng.IInvokedMethodListener
  */
-public class TckListener implements IInvokedMethodListener {
+public class TckListener extends AbstractTestListener implements IInvokedMethodListener {
+    private final Map<String, Injector>     injectors  = new HashMap<>();
+    private final Set<OnFinishTckOperation> operations = new HashSet<>();
 
-    private final Set<String> injected = new HashSet<>();
+    public TckListener() {
+        for (OnFinishTckOperation onFinishTckOperation : ServiceLoader.load(OnFinishTckOperation.class)) {
+            operations.add(onFinishTckOperation);
+        }
+    }
 
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult result) {
         if (hasTckListenerAnnotation(result.getTestClass().getRealClass())) {
             final String name = result.getTestClass().getRealClass().getName();
-            synchronized (injected) {
-                if (!injected.contains(name)) {
+            synchronized (injectors) {
+                if (!injectors.containsKey(name)) {
                     final Injector injector = Guice.createInjector(createModule(result.getTestContext(), name));
                     injector.injectMembers(result.getInstance());
-                    injected.add(name);
-                    result.getTestContext().setAttribute("injector", injector);
+                    injectors.put(name, injector);
                 }
             }
         }
@@ -121,6 +128,18 @@ public class TckListener implements IInvokedMethodListener {
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult result) {
 
+    }
+
+    @Override
+    public void onFinish(ITestContext context) {
+        synchronized (injectors) {
+            for (Injector injector : injectors.values()) {
+                for (OnFinishTckOperation operation : operations) {
+                    operation.onFinish(injector);
+                }
+            }
+            injectors.clear();
+        }
     }
 
     private Module createModule(ITestContext testContext, String name) {
