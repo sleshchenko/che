@@ -12,6 +12,7 @@ package org.eclipse.che.api.user.server.jpa;
 
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
@@ -21,13 +22,19 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
+import org.eclipse.che.api.user.server.spi.tck.PreferenceDaoTest;
+import org.eclipse.che.api.user.server.spi.tck.ProfileDaoTest;
+import org.eclipse.che.api.user.server.spi.tck.UserDaoTest;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.commons.test.tck.JpaCleaner;
 import org.eclipse.che.commons.test.tck.TckModule;
+import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.SHA512PasswordEncryptor;
 
+import javax.inject.Named;
 import java.util.Map;
 
 /**
@@ -50,5 +57,7 @@ public class JpaTckModule extends TckModule {
         bind(PreferenceDao.class).to(JpaPreferenceDao.class);
         // SHA-512 ecnryptor is faster than PBKDF2 so it is better for testing
         bind(PasswordEncryptor.class).to(SHA512PasswordEncryptor.class).in(Singleton.class);
+
+        bind(TckResourcesCleaner.class).to(JpaCleaner.class);
     }
 }

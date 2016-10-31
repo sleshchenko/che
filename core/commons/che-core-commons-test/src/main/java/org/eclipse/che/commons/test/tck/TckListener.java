@@ -10,24 +10,24 @@
  *******************************************************************************/
 package org.eclipse.che.commons.test.tck;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
+import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.name.Names;
 
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
-import org.testng.ITestContext;
+import org.testng.IClassListener;
+import org.testng.ITestClass;
 import org.testng.ITestNGListener;
-import org.testng.ITestResult;
 import org.testng.annotations.Listeners;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 
 import static java.lang.String.format;
 
@@ -101,24 +101,21 @@ import static java.lang.String.format;
  * @see org.testng.annotations.Listeners
  * @see org.testng.IInvokedMethodListener
  */
-public class TckListener extends AbstractTestListener implements IInvokedMethodListener {
-    private final Map<String, Injector>     injectors  = new HashMap<>();
-    private final Set<OnFinishTckOperation> operations = new HashSet<>();
+public class TckListener implements IClassListener {
+    public static final String CLASS_INJECTOR_SUFFIX = "Injector";
 
-    public TckListener() {
-        for (OnFinishTckOperation onFinishTckOperation : ServiceLoader.load(OnFinishTckOperation.class)) {
-            operations.add(onFinishTckOperation);
-        }
-    }
+    private final Map<String, Injector> injectors = new HashMap<>();
 
     @Override
-    public void beforeInvocation(IInvokedMethod method, ITestResult result) {
-        if (hasTckListenerAnnotation(result.getTestClass().getRealClass())) {
-            final String name = result.getTestClass().getRealClass().getName();
+    public void onBeforeClass(ITestClass testClass) {
+        if (hasTckListenerAnnotation(testClass.getRealClass())) {
+            final String name = testClass.getRealClass().getName();
             synchronized (injectors) {
                 if (!injectors.containsKey(name)) {
-                    final Injector injector = Guice.createInjector(createModule(result.getTestContext(), name));
-                    injector.injectMembers(result.getInstance());
+                    final Injector injector = Guice.createInjector(createModule(name));
+                    for (Object instance : testClass.getInstances(false)) {
+                        injector.injectMembers(instance);
+                    }
                     injectors.put(name, injector);
                 }
             }
@@ -126,23 +123,26 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
     }
 
     @Override
-    public void afterInvocation(IInvokedMethod method, ITestResult result) {
-
-    }
-
-    @Override
-    public void onFinish(ITestContext context) {
+    public void onAfterClass(ITestClass testClass) {
         synchronized (injectors) {
             for (Injector injector : injectors.values()) {
-                for (OnFinishTckOperation operation : operations) {
-                    operation.onFinish(injector);
+                final String className = testClass.getRealClass().getName();
+                TckResourcesCleaner cleaner;
+                try {
+                    // try to get test specific cleaner
+                    cleaner = injector.getInstance(Key.get(TckResourcesCleaner.class,
+                                                           Names.named(className)));
+                } catch (ConfigurationException e) {
+                    // try to get common cleaner
+                    cleaner = injector.getInstance(TckResourcesCleaner.class);
                 }
+                cleaner.onFinish(testClass, ImmutableMap.of(className + CLASS_INJECTOR_SUFFIX, injector));
             }
             injectors.clear();
         }
     }
 
-    private Module createModule(ITestContext testContext, String name) {
+    private Module createModule(String name) {
         final Iterator<TckModule> moduleIterator = ServiceLoader.load(TckModule.class).iterator();
         if (!moduleIterator.hasNext()) {
             throw new IllegalStateException(format("Couldn't find a TckModule configuration. " +
@@ -151,7 +151,7 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
                                                    TckModule.class.getName(),
                                                    name));
         }
-        return new CompoundModule(testContext, moduleIterator);
+        return new CompoundModule(moduleIterator);
     }
 
     private boolean hasTckListenerAnnotation(Class<?> clazz) {
@@ -169,20 +169,16 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
     }
 
     private static class CompoundModule extends AbstractModule {
-        private final ITestContext        testContext;
         private final Iterator<TckModule> moduleIterator;
 
-        private CompoundModule(ITestContext testContext, Iterator<TckModule> moduleIterator) {
-            this.testContext = testContext;
+        private CompoundModule(Iterator<TckModule> moduleIterator) {
             this.moduleIterator = moduleIterator;
         }
 
         @Override
         protected void configure() {
-            bind(ITestContext.class).toInstance(testContext);
             while (moduleIterator.hasNext()) {
                 final TckModule module = moduleIterator.next();
-                module.setTestContext(testContext);
                 install(module);
             }
         }
