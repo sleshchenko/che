@@ -18,7 +18,9 @@ import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
 import org.eclipse.che.api.ssh.server.spi.SshDao;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
+import org.eclipse.che.commons.test.tck.JpaCleaner;
 import org.eclipse.che.commons.test.tck.TckModule;
+import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 
@@ -32,6 +34,8 @@ public class SshTckModule extends TckModule {
         bind(SshDao.class).to(JpaSshDao.class);
         bind(new TypeLiteral<TckRepository<SshPairImpl>>(){}).toInstance(new JpaTckRepository<>(SshPairImpl.class));
         bind(new TypeLiteral<TckRepository<UserImpl>>(){}).toInstance(new JpaTckRepository<>(UserImpl.class));
+
+        bind(TckResourcesCleaner.class).to(JpaCleaner.class);
 
         install(new JpaPersistModule("main"));
         bind(JpaInitializer.class).asEagerSingleton();

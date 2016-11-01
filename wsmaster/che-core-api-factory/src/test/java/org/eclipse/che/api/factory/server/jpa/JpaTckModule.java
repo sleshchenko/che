@@ -24,7 +24,9 @@ import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
+import org.eclipse.che.commons.test.tck.JpaCleaner;
 import org.eclipse.che.commons.test.tck.TckModule;
+import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.security.PasswordEncryptor;
@@ -51,5 +53,7 @@ public class JpaTckModule extends TckModule {
         bind(FactoryDao.class).to(JpaFactoryDao.class);
 
         bind(PasswordEncryptor.class).to(SHA512PasswordEncryptor.class).in(Singleton.class);
+
+        bind(TckResourcesCleaner.class).to(JpaCleaner.class);
     }
 }
