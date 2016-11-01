@@ -24,7 +24,7 @@ import static org.testng.Assert.assertNotNull;
  *
  * @author Yevhenii Voevodin
  */
-//@Listeners(TckListener.class)
+@Listeners(TckListener.class)
 public class TckComponentsTest {
 
     @Inject
@@ -33,7 +33,7 @@ public class TckComponentsTest {
     @Inject
     private DBUrlProvider dbUrlProvider;
 
-    @Test(enabled = false)
+    @Test
     public void testComponentsAreInjected() {
         assertNotNull(tckRepository, "TckRepository is not injected");
         assertNotNull(dbUrlProvider, "DBUrlProvider is not injected");

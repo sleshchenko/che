@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * This class is designed to close {@link EntityManagerFactory}
- * on finish of tck test for jpa implementation.
+ * on finish of tck test with jpa implementation.
  *
  * <p/>
  * Examples of usage:<br>

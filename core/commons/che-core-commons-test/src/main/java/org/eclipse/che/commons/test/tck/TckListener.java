@@ -38,9 +38,9 @@ import static java.lang.String.format;
  * The listener is designed to instantiate {@link TckModule tck modules}
  * using {@link ServiceLoader} mechanism. The components  provided by those
  * modules will be injected into a test class whether it's necessary to do so.
- * For each test classes will be used different instances of injector.
+ * For each test class will be used new instance of injector.
  * After test suite is finished listener'll try to find test specific or common
- * instance of {@link TckResourcesCleaner}. It can be bound in modules.
+ * instance of {@link TckResourcesCleaner}. It is optional and can be bound in modules.
  *
  * <p>The listener expects at least one implementation of {@code TckModule}
  * to be configured, if it doesn't find any of the {@code TckModule}
@@ -121,7 +121,7 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
             final String name = testClass.getRealClass().getName();
             synchronized (injectors) {
                 if (!injectors.containsKey(name)) {
-                    final Injector injector = Guice.createInjector(createModule(name));
+                    final Injector injector = Guice.createInjector(createModule(testResult.getTestContext(), name));
                     injector.injectMembers(testClass.getInstance());
                     injectors.put(name, injector);
                 }
@@ -137,8 +137,8 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
     public void onFinish(ITestContext context) {
         // using of onFinish method for resources cleaning will work incorrect
         // in case when two tck tests which should clean resources are in one suite
-        // it's because onFinish will be invoked on finishing of all test suite
-        // but we should clean resources after each test
+        // it's because onFinish will be invoked on finish of all tests in suite
+        // but resources should be clean after each test
         // TODO Rework it to use IClassListener to avoid described problem
         for (Map.Entry<String, Injector> className2Injector : injectors.entrySet()) {
             final Injector injector = className2Injector.getValue();
@@ -161,13 +161,12 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
     private TckResourcesCleaner getResourcesCleaner(Injector injector, Key<TckResourcesCleaner> key) {
         try {
             return injector.getInstance(key);
-        } catch (ConfigurationException e) {
-
+        } catch (ConfigurationException ignored) {
         }
         return null;
     }
 
-    private Module createModule(String name) {
+    private Module createModule(ITestContext testContext, String name) {
         final Iterator<TckModule> moduleIterator = ServiceLoader.load(TckModule.class).iterator();
         if (!moduleIterator.hasNext()) {
             throw new IllegalStateException(format("Couldn't find a TckModule configuration. " +
@@ -176,7 +175,7 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
                                                    TckModule.class.getName(),
                                                    name));
         }
-        return new CompoundModule(moduleIterator);
+        return new CompoundModule(testContext, moduleIterator);
     }
 
     private boolean hasTckListenerAnnotation(Class<?> clazz) {
@@ -194,16 +193,20 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
     }
 
     private static class CompoundModule extends AbstractModule {
+        private final ITestContext        testContext;
         private final Iterator<TckModule> moduleIterator;
 
-        private CompoundModule(Iterator<TckModule> moduleIterator) {
+        private CompoundModule(ITestContext testContext, Iterator<TckModule> moduleIterator) {
+            this.testContext = testContext;
             this.moduleIterator = moduleIterator;
         }
 
         @Override
         protected void configure() {
+            bind(ITestContext.class).toInstance(testContext);
             while (moduleIterator.hasNext()) {
                 final TckModule module = moduleIterator.next();
+                module.setTestContext(testContext);
                 install(module);
             }
         }
