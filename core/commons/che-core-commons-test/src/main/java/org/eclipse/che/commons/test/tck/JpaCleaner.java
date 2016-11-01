@@ -29,7 +29,7 @@ import java.util.Map;
 public class JpaCleaner implements TckResourcesCleaner {
     @Override
     public void onFinish(Map<String, Object> attributes) {
-        final Injector injector = (Injector)attributes.get(TckListener.CLASS_INJECTOR_PROPERTY);
+        final Injector injector = (Injector)attributes.get(TckListener.INJECTOR_PROPERTY);
         injector.getInstance(EntityManagerFactory.class).close();
     }
 }

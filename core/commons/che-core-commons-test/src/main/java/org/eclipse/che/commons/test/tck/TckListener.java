@@ -110,7 +110,7 @@ import static java.lang.String.format;
  * @see TckResourcesCleaner
  */
 public class TckListener extends AbstractTestListener implements IInvokedMethodListener {
-    public static final String CLASS_INJECTOR_PROPERTY = "Injector";
+    public static final String INJECTOR_PROPERTY = "Injector";
 
     private final Map<String, Injector> injectors = new HashMap<>();
 
@@ -153,7 +153,7 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
             }
 
             if (cleaner != null) {
-                cleaner.onFinish(ImmutableMap.of(CLASS_INJECTOR_PROPERTY, injector));
+                cleaner.onFinish(ImmutableMap.of(INJECTOR_PROPERTY, injector));
             }
         }
     }
