@@ -74,8 +74,8 @@ import static java.lang.String.format;
  *     public void configure() {
  *         bind(Component1.class).to(...);
  *         bind(Component2.class).toInstance(new Component2(() -> testContext.getAttribute("server_url").toString()));
- *         bind(TckListener.class).to(...);
- *         bind(TckListener.class).annotatedWith(Names.named(SubjectTest.class.getName())).to(...);
+ *         bind(TckResourcesCleaner.class).to(...);
+ *         bind(TckResourcesCleaner.class).annotatedWith(Names.named(SubjectTest.class.getName())).to(...);
  *     }
  * }
  *
@@ -107,6 +107,7 @@ import static java.lang.String.format;
  * @author Sergii Leschenko
  * @see org.testng.annotations.Listeners
  * @see org.testng.IInvokedMethodListener
+ * @see TckResourcesCleaner
  */
 public class TckListener extends AbstractTestListener implements IInvokedMethodListener {
     public static final String CLASS_INJECTOR_PROPERTY = "Injector";

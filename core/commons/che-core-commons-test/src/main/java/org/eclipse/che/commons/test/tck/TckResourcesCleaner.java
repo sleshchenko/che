@@ -15,10 +15,21 @@ import java.util.Map;
 /**
  * This class is designed to clean up resources after tck test.
  *
- * <p>Implementation should be defined in guice module.
+ * <p>Implementation should be defined in {@link TckModule}.
  * It can be defined common for all tests or test specific by using @Named annotation.
  *
+ * <p>The usage example:
+ * <pre>
+ * class MyTckModule extends TckModule {
+ *     public void configure() {
+ *         bind(TckResourcesCleaner.class).to(...);
+ *         bind(TckResourcesCleaner.class).annotatedWith(Names.named(SomeTest.class.getName())).to(...);
+ *     }
+ * }
+ * </pre>
+ *
  * @author Sergii Leschenko
+ * @see TckListener
  */
 public interface TckResourcesCleaner {
     void onFinish(Map<String, Object> attributes);
