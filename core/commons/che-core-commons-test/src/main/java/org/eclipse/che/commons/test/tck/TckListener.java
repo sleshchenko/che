@@ -36,9 +36,11 @@ import static java.lang.String.format;
 
 /**
  * The listener is designed to instantiate {@link TckModule tck modules}
- * using {@link ServiceLoader} mechanism. The components
- * provided by those modules will be injected into a test class
- * whether it's necessary to do so.
+ * using {@link ServiceLoader} mechanism. The components  provided by those
+ * modules will be injected into a test class whether it's necessary to do so.
+ * For each test classes will be used different instances of injector.
+ * After test suite is finished listener'll try to find test specific or common
+ * instance of {@link TckResourcesCleaner}. It can be bound in modules.
  *
  * <p>The listener expects at least one implementation of {@code TckModule}
  * to be configured, if it doesn't find any of the {@code TckModule}
@@ -72,6 +74,8 @@ import static java.lang.String.format;
  *     public void configure() {
  *         bind(Component1.class).to(...);
  *         bind(Component2.class).toInstance(new Component2(() -> testContext.getAttribute("server_url").toString()));
+ *         bind(TckListener.class).to(...);
+ *         bind(TckListener.class).annotatedWith(Names.named(SubjectTest.class.getName())).to(...);
  *     }
  * }
  *
@@ -130,20 +134,36 @@ public class TckListener extends AbstractTestListener implements IInvokedMethodL
 
     @Override
     public void onFinish(ITestContext context) {
+        // using of onFinish method for resources cleaning will work incorrect
+        // in case when two tck tests which should clean resources are in one suite
+        // it's because onFinish will be invoked on finishing of all test suite
+        // but we should clean resources after each test
+        // TODO Rework it to use IClassListener to avoid described problem
         for (Map.Entry<String, Injector> className2Injector : injectors.entrySet()) {
             final Injector injector = className2Injector.getValue();
             final String className = className2Injector.getKey();
-            TckResourcesCleaner cleaner;
-            try {
-                // try to get test specific cleaner
-                cleaner = injector.getInstance(Key.get(TckResourcesCleaner.class,
-                                                       Names.named(className)));
-            } catch (ConfigurationException e) {
-                // try to get common cleaner
-                cleaner = injector.getInstance(TckResourcesCleaner.class);
+            //try to get test specific cleaner
+            TckResourcesCleaner cleaner = getResourcesCleaner(injector,
+                                                              Key.get(TckResourcesCleaner.class,
+                                                                      Names.named(className)));
+            if (cleaner == null) {
+                //try to get common cleaner
+                cleaner = getResourcesCleaner(injector, Key.get(TckResourcesCleaner.class));
             }
-            cleaner.onFinish(ImmutableMap.of(CLASS_INJECTOR_PROPERTY, injector));
+
+            if (cleaner != null) {
+                cleaner.onFinish(ImmutableMap.of(CLASS_INJECTOR_PROPERTY, injector));
+            }
         }
+    }
+
+    private TckResourcesCleaner getResourcesCleaner(Injector injector, Key<TckResourcesCleaner> key) {
+        try {
+            return injector.getInstance(key);
+        } catch (ConfigurationException e) {
+
+        }
+        return null;
     }
 
     private Module createModule(String name) {
