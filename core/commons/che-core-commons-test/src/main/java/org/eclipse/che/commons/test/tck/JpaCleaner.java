@@ -12,8 +12,6 @@ package org.eclipse.che.commons.test.tck;
 
 import com.google.inject.Injector;
 
-import org.testng.ITestClass;
-
 import javax.persistence.EntityManagerFactory;
 import java.util.Map;
 
@@ -30,8 +28,8 @@ import java.util.Map;
  */
 public class JpaCleaner implements TckResourcesCleaner {
     @Override
-    public void onFinish(ITestClass testClass, Map<String, Object> attributes) {
-        final Injector injector = (Injector)attributes.get(testClass.getRealClass().getName() + TckListener.CLASS_INJECTOR_SUFFIX);
+    public void onFinish(Map<String, Object> attributes) {
+        final Injector injector = (Injector)attributes.get(TckListener.CLASS_INJECTOR_PROPERTY);
         injector.getInstance(EntityManagerFactory.class).close();
     }
 }

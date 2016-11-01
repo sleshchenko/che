@@ -19,9 +19,12 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 
-import org.testng.IClassListener;
-import org.testng.ITestClass;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
+import org.testng.ITestContext;
 import org.testng.ITestNGListener;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.annotations.Listeners;
 
 import java.util.HashMap;
@@ -101,21 +104,20 @@ import static java.lang.String.format;
  * @see org.testng.annotations.Listeners
  * @see org.testng.IInvokedMethodListener
  */
-public class TckListener implements IClassListener {
-    public static final String CLASS_INJECTOR_SUFFIX = "Injector";
+public class TckListener extends AbstractTestListener implements IInvokedMethodListener {
+    public static final String CLASS_INJECTOR_PROPERTY = "Injector";
 
     private final Map<String, Injector> injectors = new HashMap<>();
 
     @Override
-    public void onBeforeClass(ITestClass testClass) {
+    public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+        final ITestNGMethod testClass = method.getTestMethod();
         if (hasTckListenerAnnotation(testClass.getRealClass())) {
             final String name = testClass.getRealClass().getName();
             synchronized (injectors) {
                 if (!injectors.containsKey(name)) {
                     final Injector injector = Guice.createInjector(createModule(name));
-                    for (Object instance : testClass.getInstances(false)) {
-                        injector.injectMembers(instance);
-                    }
+                    injector.injectMembers(testClass.getInstance());
                     injectors.put(name, injector);
                 }
             }
@@ -123,22 +125,24 @@ public class TckListener implements IClassListener {
     }
 
     @Override
-    public void onAfterClass(ITestClass testClass) {
-        synchronized (injectors) {
-            for (Injector injector : injectors.values()) {
-                final String className = testClass.getRealClass().getName();
-                TckResourcesCleaner cleaner;
-                try {
-                    // try to get test specific cleaner
-                    cleaner = injector.getInstance(Key.get(TckResourcesCleaner.class,
-                                                           Names.named(className)));
-                } catch (ConfigurationException e) {
-                    // try to get common cleaner
-                    cleaner = injector.getInstance(TckResourcesCleaner.class);
-                }
-                cleaner.onFinish(testClass, ImmutableMap.of(className + CLASS_INJECTOR_SUFFIX, injector));
+    public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
+    }
+
+    @Override
+    public void onFinish(ITestContext context) {
+        for (Map.Entry<String, Injector> className2Injector : injectors.entrySet()) {
+            final Injector injector = className2Injector.getValue();
+            final String className = className2Injector.getKey();
+            TckResourcesCleaner cleaner;
+            try {
+                // try to get test specific cleaner
+                cleaner = injector.getInstance(Key.get(TckResourcesCleaner.class,
+                                                       Names.named(className)));
+            } catch (ConfigurationException e) {
+                // try to get common cleaner
+                cleaner = injector.getInstance(TckResourcesCleaner.class);
             }
-            injectors.clear();
+            cleaner.onFinish(ImmutableMap.of(CLASS_INJECTOR_PROPERTY, injector));
         }
     }
 

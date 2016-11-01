@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.che.commons.test.tck;
 
-import org.testng.ITestClass;
-
 import java.util.Map;
 
 /**
@@ -23,5 +21,5 @@ import java.util.Map;
  * @author Sergii Leschenko
  */
 public interface TckResourcesCleaner {
-    void onFinish(ITestClass testClass, Map<String, Object> attributes);
+    void onFinish(Map<String, Object> attributes);
 }
