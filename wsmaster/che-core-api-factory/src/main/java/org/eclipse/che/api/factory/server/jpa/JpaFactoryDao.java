@@ -17,7 +17,7 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
-import org.eclipse.che.core.db.event.CascadeRemovalEventSubscriber;
+import org.eclipse.che.core.db.event.CascadeEventSubscriber;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
@@ -173,7 +173,7 @@ public class JpaFactoryDao implements FactoryDao {
 
     @Singleton
     public static class RemoveFactoriesBeforeUserRemovedEventSubscriber
-            extends CascadeRemovalEventSubscriber<BeforeUserRemovedEvent> {
+            extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
         @Inject
         private FactoryDao   factoryDao;
         @Inject
@@ -190,7 +190,7 @@ public class JpaFactoryDao implements FactoryDao {
         }
 
         @Override
-        public void onRemovalEvent(BeforeUserRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
             final Pair<String, String> factoryCreator = Pair.of("creator.userId", event.getUser().getId());
             for (FactoryImpl factory : factoryDao.getByAttribute(0, 0, singletonList(factoryCreator))) {
                 factoryDao.remove(factory.getId());

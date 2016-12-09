@@ -8,26 +8,27 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.account.event;
+package org.eclipse.che.api.user.server.event;
 
-import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.core.notification.EventOrigin;
+import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.core.db.event.CascadeEvent;
 
 /**
- * Published before {@link AccountImpl account} removed.
+ * Published after {@link UserImpl user} persisted.
  *
- * @author Antona Korneta
+ * @author Sergii Leschenko
  */
-public class BeforeAccountRemovedEvent extends CascadeEvent {
+@EventOrigin("user")
+public class PostUserPersistedEvent extends CascadeEvent {
+    private final UserImpl user;
 
-    private final AccountImpl account;
-
-    public BeforeAccountRemovedEvent(AccountImpl account) {
-        this.account = account;
+    public PostUserPersistedEvent(UserImpl user) {
+        this.user = user;
     }
 
-    /** Returns account which is going to be removed. */
-    public AccountImpl getAccount() {
-        return account;
+    /** Returns user which is persisted. */
+    public UserImpl getUser() {
+        return user;
     }
 }

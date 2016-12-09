@@ -17,14 +17,14 @@ import org.eclipse.che.api.core.notification.EventSubscriber;
  * puts exceptions in the removal context.
  *
  * @author Anton Korneta
+ * @author Sergii Leschenko
  */
-public abstract class CascadeRemovalEventSubscriber<T extends CascadeRemovalEvent> implements EventSubscriber<T> {
-
+public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements EventSubscriber<T> {
     @Override
     public void onEvent(T event) {
         if (!event.getContext().isFailed()) {
             try {
-                onRemovalEvent(event);
+                onCascadeEvent(event);
             } catch (Exception ex) {
                 event.getContext().fail(ex);
             }
@@ -32,7 +32,10 @@ public abstract class CascadeRemovalEventSubscriber<T extends CascadeRemovalEven
     }
 
     /**
-     * Receives notification about cascade removal event.
+     * Receives notification about cascade event.
+     *
+     * <p>If the method throws an unchecked exception it will be set to context
+     * to break event publishing and rethrow exception by {@link CascadeEventService}.
      */
-    public abstract void onRemovalEvent(T event) throws Exception;
+    public abstract void onCascadeEvent(T event) throws Exception;
 }

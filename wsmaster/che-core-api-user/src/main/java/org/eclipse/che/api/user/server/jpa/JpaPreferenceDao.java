@@ -13,7 +13,7 @@ package org.eclipse.che.api.user.server.jpa;
 import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.event.CascadeRemovalEventSubscriber;
+import org.eclipse.che.core.db.event.CascadeEventSubscriber;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
@@ -130,7 +130,7 @@ public class JpaPreferenceDao implements PreferenceDao {
 
     @Singleton
     public static class RemovePreferencesBeforeUserRemovedEventSubscriber
-            extends CascadeRemovalEventSubscriber<BeforeUserRemovedEvent> {
+            extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
 
         @Inject
         private EventService     eventService;
@@ -148,7 +148,7 @@ public class JpaPreferenceDao implements PreferenceDao {
         }
 
         @Override
-        public void onRemovalEvent(BeforeUserRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
             preferenceDao.remove(event.getUser().getId());
         }
     }

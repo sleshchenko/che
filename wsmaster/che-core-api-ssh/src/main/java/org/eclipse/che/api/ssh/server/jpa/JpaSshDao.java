@@ -16,7 +16,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.event.CascadeRemovalEventSubscriber;
+import org.eclipse.che.core.db.event.CascadeEventSubscriber;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
 import org.eclipse.che.api.ssh.server.spi.SshDao;
@@ -135,7 +135,7 @@ public class JpaSshDao implements SshDao {
 
     @Singleton
     public static class RemoveSshKeysBeforeUserRemovedEventSubscriber
-            extends CascadeRemovalEventSubscriber<BeforeUserRemovedEvent> {
+            extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
         @Inject
         private SshDao       sshDao;
         @Inject
@@ -152,7 +152,7 @@ public class JpaSshDao implements SshDao {
         }
 
         @Override
-        public void onRemovalEvent(BeforeUserRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
             for (SshPairImpl sshPair : sshDao.get(event.getUser().getId())) {
                 sshDao.remove(sshPair.getOwner(), sshPair.getService(), sshPair.getName());
             }

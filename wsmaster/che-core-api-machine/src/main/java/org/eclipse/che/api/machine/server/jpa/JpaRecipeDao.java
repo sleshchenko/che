@@ -15,12 +15,13 @@ import com.google.inject.persist.Transactional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.machine.server.event.BeforeRecipeRemovedEvent;
 import org.eclipse.che.api.machine.server.event.RecipePersistedEvent;
 import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
 import org.eclipse.che.api.machine.server.spi.RecipeDao;
+import org.eclipse.che.core.db.jpa.DuplicateKeyException;
+import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -145,6 +146,7 @@ public class JpaRecipeDao implements RecipeDao {
         final EntityManager manager = managerProvider.get();
         final RecipeImpl recipe = manager.find(RecipeImpl.class, id);
         if (recipe != null) {
+            eventService.publish(new BeforeRecipeRemovedEvent(new RecipeImpl(recipe)));
             manager.remove(recipe);
         }
     }

@@ -15,6 +15,7 @@ import com.google.inject.persist.Transactional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.workspace.server.event.BeforeStackRemovedEvent;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.event.StackPersistedEvent;
@@ -138,6 +139,7 @@ public class JpaStackDao implements StackDao {
         final EntityManager manager = managerProvider.get();
         final StackImpl stack = manager.find(StackImpl.class, id);
         if (stack != null) {
+            eventService.publish(new BeforeStackRemovedEvent(new StackImpl(stack)));
             manager.remove(stack);
         }
     }

@@ -17,7 +17,7 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.user.server.Constants;
-import org.eclipse.che.api.user.server.event.PostUserRemovedEvent;
+import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.commons.lang.NameGenerator;
@@ -373,13 +373,12 @@ public class UserDaoTest {
     public void shouldFireEventOnRemoveExistedUser() throws Exception {
         final UserImpl user = users[0];
         final String[] firedUserId = {null};
-        EventSubscriber eventSubscriber =
-                (EventSubscriber<PostUserRemovedEvent>)event -> firedUserId[0] = event.getUserId();
+        EventSubscriber eventSubscriber = (EventSubscriber<UserRemovedEvent>)event -> firedUserId[0] = event.getUserId();
 
-        eventService.subscribe(eventSubscriber, PostUserRemovedEvent.class);
+        eventService.subscribe(eventSubscriber, UserRemovedEvent.class);
         userDao.remove(user.getId());
         Assert.assertEquals(firedUserId[0], user.getId());
-        eventService.unsubscribe(eventSubscriber, PostUserRemovedEvent.class);
+        eventService.unsubscribe(eventSubscriber, UserRemovedEvent.class);
     }
 
     @Test

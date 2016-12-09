@@ -17,11 +17,14 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.user.server.event.PostUserRemovedEvent;
-import org.eclipse.che.core.db.jpa.CascadeRemovalException;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
+import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
+import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
+import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
+import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
+import org.eclipse.che.core.db.jpa.CascadeOperationException;
+import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.security.PasswordEncryptor;
 
 import javax.inject.Inject;
@@ -108,11 +111,9 @@ public class JpaUserDao implements UserDao {
     public void remove(String id) throws ServerException, ConflictException {
         requireNonNull(id, "Required non-null id");
         try {
-            Optional<UserImpl> user = doRemove(id);
-            if (user.isPresent()) {
-                eventService.publish(new PostUserRemovedEvent(id));
-            }
-        } catch (CascadeRemovalException removeEx) {
+            Optional<UserImpl> userOpt = doRemove(id);
+            userOpt.ifPresent(user -> eventService.publish(new UserRemovedEvent(user.getId())));
+        } catch (CascadeOperationException removeEx) {
             throw new ServerException(removeEx.getCause().getLocalizedMessage(), removeEx.getCause());
         } catch (RuntimeException x) {
             throw new ServerException(x.getLocalizedMessage(), x);
@@ -217,6 +218,8 @@ public class JpaUserDao implements UserDao {
     @Transactional
     protected void doCreate(UserImpl user) {
         managerProvider.get().persist(user);
+
+        eventService.publish(new PostUserPersistedEvent(new UserImpl(user)));
     }
 
     @Transactional
@@ -226,6 +229,7 @@ public class JpaUserDao implements UserDao {
         if (user == null) {
             throw new NotFoundException(format("Couldn't update user with id '%s' because it doesn't exist", update.getId()));
         }
+        UserImpl originalUser = new UserImpl(user);
         final String password = update.getPassword();
         if (password != null) {
             update.setPassword(encryptor.encrypt(password));
@@ -233,15 +237,21 @@ public class JpaUserDao implements UserDao {
             update.setPassword(user.getPassword());
         }
         manager.merge(update);
+
+        eventService.publish(new PostUserUpdatedEvent(originalUser,
+                                                      new UserImpl(update)));
     }
 
     @Transactional
     protected Optional<UserImpl> doRemove(String id) {
         final EntityManager manager = managerProvider.get();
-        final Optional<UserImpl> user = Optional.ofNullable(manager.find(UserImpl.class, id));
-        user.ifPresent(manager::remove);
-        return user;
-
+        final UserImpl user = manager.find(UserImpl.class, id);
+        if (user == null) {
+            return Optional.empty();
+        }
+        eventService.publish(new BeforeUserRemovedEvent(user));
+        manager.remove(user);
+        return Optional.of(user);
     }
 
     // Returns user instance copy without password

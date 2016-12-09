@@ -8,21 +8,19 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.jpa;
-
-import javax.persistence.RollbackException;
+package org.eclipse.che.core.db.event;
 
 /**
- * Throws when any exception during cascade remove occurs.
- *
- * <p>Note that in case of throwing this type of exception,
- * cascade removal transaction will be rolled back.
+ * Special event type which is needed only for notification
+ * in the process which can require cascade operation.
  *
  * @author Anton Korneta
+ * @author Sergii Leschenko
  */
-public class CascadeRemovalException extends RollbackException {
+public abstract class CascadeEvent {
+    protected final CascadeContext context = new CascadeContext();
 
-    public CascadeRemovalException(Throwable cause) {
-        super(cause);
+    public CascadeContext getContext() {
+        return context;
     }
 }
