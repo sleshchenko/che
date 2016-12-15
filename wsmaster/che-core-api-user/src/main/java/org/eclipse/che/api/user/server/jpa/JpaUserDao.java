@@ -121,7 +121,7 @@ public class JpaUserDao implements UserDao {
     }
 
     @Override
-    @Transactional
+            .
     public UserImpl getByAlias(String alias) throws NotFoundException, ServerException {
         requireNonNull(alias, "Required non-null alias");
         try {
@@ -217,8 +217,9 @@ public class JpaUserDao implements UserDao {
 
     @Transactional
     protected void doCreate(UserImpl user) {
-        managerProvider.get().persist(user);
-
+        EntityManager manage = managerProvider.get();
+        manage.persist(user);
+        manage.flush();
         eventService.publish(new PostUserPersistedEvent(new UserImpl(user)));
     }
 
@@ -237,6 +238,7 @@ public class JpaUserDao implements UserDao {
             update.setPassword(user.getPassword());
         }
         manager.merge(update);
+        manager.flush();
 
         eventService.publish(new PostUserUpdatedEvent(originalUser,
                                                       new UserImpl(update)));
@@ -251,6 +253,7 @@ public class JpaUserDao implements UserDao {
         }
         eventService.publish(new BeforeUserRemovedEvent(user));
         manager.remove(user);
+        manager.flush();
         return Optional.of(user);
     }
 

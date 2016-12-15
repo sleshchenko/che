@@ -117,6 +117,7 @@ public class JpaPreferenceDao implements PreferenceDao {
         } else {
             manager.persist(prefs);
         }
+        manager.flush();
     }
 
     @Transactional
@@ -125,6 +126,7 @@ public class JpaPreferenceDao implements PreferenceDao {
         final PreferenceEntity prefs = manager.find(PreferenceEntity.class, userId);
         if (prefs != null) {
             manager.remove(prefs);
+            manager.flush();
         }
     }
 

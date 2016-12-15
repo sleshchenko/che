@@ -103,6 +103,7 @@ public class JpaProfileDao implements ProfileDao {
                                                profile.getUserId()));
         }
         manager.merge(profile);
+        manager.flush();
     }
 
     @Transactional
@@ -111,6 +112,7 @@ public class JpaProfileDao implements ProfileDao {
         final ProfileImpl profile = manager.find(ProfileImpl.class, userId);
         if (profile != null) {
             manager.remove(profile);
+            manager.flush();
         }
     }
 

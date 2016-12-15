@@ -131,7 +131,9 @@ public class JpaStackDao implements StackDao {
         if (stack.getWorkspaceConfig() != null) {
             stack.getWorkspaceConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
-        managerProvider.get().persist(stack);
+        EntityManager manager = managerProvider.get();
+        manager.persist(stack);
+        manager.flush();
     }
 
     @Transactional
@@ -141,6 +143,7 @@ public class JpaStackDao implements StackDao {
         if (stack != null) {
             eventService.publish(new BeforeStackRemovedEvent(new StackImpl(stack)));
             manager.remove(stack);
+            manager.flush();
         }
     }
 
@@ -153,6 +156,8 @@ public class JpaStackDao implements StackDao {
         if (update.getWorkspaceConfig() != null) {
             update.getWorkspaceConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
-        return manager.merge(update);
+        StackImpl merged = manager.merge(update);
+        manager.setFlushMode();
+        return merged;
     }
 }

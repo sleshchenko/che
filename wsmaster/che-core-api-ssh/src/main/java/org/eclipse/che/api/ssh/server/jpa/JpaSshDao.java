@@ -120,7 +120,9 @@ public class JpaSshDao implements SshDao {
 
     @Transactional
     protected void doCreate(SshPairImpl entity) {
-        managerProvider.get().persist(entity);
+        EntityManager manager = managerProvider.get();
+        manager.persist(entity);
+        manager.flush();
     }
 
     @Transactional
@@ -131,6 +133,7 @@ public class JpaSshDao implements SshDao {
             throw new NotFoundException(format("Ssh pair with service '%s' and name '%s' was not found.", service, name));
         }
         manager.remove(entity);
+        manager.flush();
     }
 
     @Singleton

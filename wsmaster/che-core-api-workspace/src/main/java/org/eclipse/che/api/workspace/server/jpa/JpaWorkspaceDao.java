@@ -186,7 +186,9 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         if (workspace.getConfig() != null) {
             workspace.getConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
-        managerProvider.get().persist(workspace);
+        EntityManager manager = managerProvider.get();
+        manager.persist(workspace);
+        manager.flush();
     }
 
     @Transactional
@@ -196,19 +198,23 @@ public class JpaWorkspaceDao implements WorkspaceDao {
             final EntityManager manager = managerProvider.get();
             eventService.publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace)));
             manager.remove(workspace);
+            manager.flush();
+            eventService.publish(new WorkspaceRemovedEvent(workspace));
         }
-        eventService.publish(new WorkspaceRemovedEvent(workspace));
     }
 
     @Transactional
     protected WorkspaceImpl doUpdate(WorkspaceImpl update) throws NotFoundException {
-        if (managerProvider.get().find(WorkspaceImpl.class, update.getId()) == null) {
+        EntityManager manager = managerProvider.get();
+        if (manager.find(WorkspaceImpl.class, update.getId()) == null) {
             throw new NotFoundException(format("Workspace with id '%s' doesn't exist", update.getId()));
         }
         if (update.getConfig() != null) {
             update.getConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
-        return managerProvider.get().merge(update);
+        WorkspaceImpl merged = manager.merge(update);
+        manager.flush();
+        return merged;
     }
 
     @Singleton

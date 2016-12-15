@@ -148,6 +148,7 @@ public class JpaFactoryDao implements FactoryDao {
             factory.getWorkspace().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
         manager.persist(factory);
+        manager.flush();
     }
 
     @Transactional
@@ -159,7 +160,9 @@ public class JpaFactoryDao implements FactoryDao {
         if (update.getWorkspace() != null) {
             update.getWorkspace().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
-        return manager.merge(update);
+        FactoryImpl merged = manager.merge(update);
+        manager.flush();
+        return merged;
     }
 
     @Transactional
@@ -168,6 +171,7 @@ public class JpaFactoryDao implements FactoryDao {
         final FactoryImpl factory = manager.find(FactoryImpl.class, id);
         if (factory != null) {
             manager.remove(factory);
+            manager.flush();
         }
     }
 

@@ -148,6 +148,7 @@ public class JpaRecipeDao implements RecipeDao {
         if (recipe != null) {
             eventService.publish(new BeforeRecipeRemovedEvent(new RecipeImpl(recipe)));
             manager.remove(recipe);
+            manager.flush();
         }
     }
 
@@ -157,11 +158,15 @@ public class JpaRecipeDao implements RecipeDao {
         if (manager.find(RecipeImpl.class, update.getId()) == null) {
             throw new NotFoundException(format("Could not update recipe with id %s because it doesn't exist", update.getId()));
         }
-        return manager.merge(update);
+        RecipeImpl merged = manager.merge(update);
+        manager.flush();
+        return merged;
     }
 
     @Transactional
     protected void doCreateRecipe(RecipeImpl recipe) {
-        managerProvider.get().persist(recipe);
+        EntityManager manage = managerProvider.get();
+        manage.persist(recipe);
+        manage.flush();
     }
 }
