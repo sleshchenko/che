@@ -13,6 +13,7 @@ package org.eclipse.che.api.workspace.server.jpa;
 import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -237,7 +238,7 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeAccountRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeAccountRemovedEvent event) throws ApiException {
             for (WorkspaceImpl workspace : workspaceManager.getByNamespace(event.getAccount().getName())) {
                 workspaceManager.removeWorkspace(workspace.getId());
             }
@@ -263,7 +264,7 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws ApiException {
             workspaceManager.removeSnapshots(event.getWorkspace().getId());
         }
     }

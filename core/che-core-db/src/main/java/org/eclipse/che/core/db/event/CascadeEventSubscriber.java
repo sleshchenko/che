@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.event;
 
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 
 /**
@@ -25,7 +26,7 @@ public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements 
         if (!event.getContext().isFailed()) {
             try {
                 onCascadeEvent(event);
-            } catch (Exception ex) {
+            } catch (ApiException ex) {
                 event.getContext().fail(ex);
             }
         }
@@ -37,5 +38,5 @@ public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements 
      * <p>If the method throws an unchecked exception it will be set to context
      * to break event publishing and rethrow exception by {@link CascadeEventService}.
      */
-    public abstract void onCascadeEvent(T event) throws Exception;
+    public abstract void onCascadeEvent(T event) throws ApiException;
 }

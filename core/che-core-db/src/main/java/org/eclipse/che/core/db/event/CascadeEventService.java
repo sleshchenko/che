@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.event;
 
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.core.db.jpa.CascadeOperationException;
-import org.eclipse.che.core.db.jpa.ConflictCascadeOperationException;
 
 import javax.inject.Singleton;
 
@@ -45,18 +46,13 @@ public class CascadeEventService extends EventService {
      *
      * @param event
      *         event to publish
-     * @throws CascadeOperationException
+     * @throws ApiException
      *         when some error occurs during operation publishing
      */
-    public void publish(CascadeEvent event) throws CascadeOperationException {
+    public void publish(CascadeEvent event) throws ApiException {
         super.publish(event);
         if (event.getContext().isFailed()) {
-            Exception cause = event.getContext().getCause();
-            if (cause instanceof ConflictException) {
-                throw new ConflictCascadeOperationException(cause.getMessage(), cause);
-            } else {
-                throw new CascadeOperationException(cause.getMessage(), cause);
-            }
+            throw event.getContext().getCause();
         }
     }
 
@@ -65,13 +61,62 @@ public class CascadeEventService extends EventService {
      *
      * @param event
      *         event to publish
-     * @throws ConflictCascadeOperationException
+     * @throws ConflictException
      *         409
-     * @throws CascadeOperationException
+     * @throws ServerException
      *         500
      */
-    public void publish(PersistedEvent event) throws ConflictCascadeOperationException,
-                                                     CascadeOperationException {
-        publish((CascadeEvent)event);
+    public void publish(PersistEvent event) throws ConflictException,
+                                                   ServerException {
+        try {
+            publish((CascadeEvent)event);
+        } catch (ConflictException | ServerException e) {
+            throw e;
+        } catch (ApiException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    /**
+     * Publish specified {@code event}.
+     *
+     * @param event
+     *         event to publish
+     * @throws ConflictException
+     *         409
+     * @throws ServerException
+     *         500
+     */
+    public void publish(RemoveEvent event) throws ConflictException,
+                                                  ServerException {
+        try {
+            publish((CascadeEvent)event);
+        } catch (ConflictException | ServerException e) {
+            throw e;
+        } catch (ApiException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    /**
+     * Publish specified {@code event}.
+     *
+     * @param event
+     *         event to publish
+     * @throws ConflictException
+     *         409
+     * @throws ServerException
+     *         500
+     */
+    public void publish(UpdateEvent event) throws ConflictException,
+                                                  ServerException,
+                                                  NotFoundException {
+        try {
+            publish((CascadeEvent)event);
+        } catch (NotFoundException | ConflictException | ServerException e) {
+            throw e;
+        } catch (ApiException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
     }
 }

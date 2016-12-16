@@ -157,7 +157,6 @@ public class JpaStackDao implements StackDao {
             update.getWorkspaceConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
         }
         StackImpl merged = manager.merge(update);
-        manager.setFlushMode();
         return merged;
     }
 }

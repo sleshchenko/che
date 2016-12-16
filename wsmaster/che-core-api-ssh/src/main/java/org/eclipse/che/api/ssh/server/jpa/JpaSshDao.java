@@ -12,15 +12,16 @@ package org.eclipse.che.api.ssh.server.jpa;
 
 import com.google.inject.persist.Transactional;
 
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
 import org.eclipse.che.api.ssh.server.spi.SshDao;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
+import org.eclipse.che.core.db.event.CascadeEventSubscriber;
+import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -155,7 +156,7 @@ public class JpaSshDao implements SshDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeUserRemovedEvent event) throws ApiException {
             for (SshPairImpl sshPair : sshDao.get(event.getUser().getId())) {
                 sshDao.remove(sshPair.getOwner(), sshPair.getService(), sshPair.getName());
             }

@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.event;
 
-import org.eclipse.che.core.db.jpa.ConflictCascadeOperationException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ServerException;
 
 /**
- * Publisher should expect {@link ConflictCascadeOperationException} while publishing event.
+ * Publisher should expect {@link ConflictException} or {@link ServerException} while publishing event.
+ *
+ * @see CascadeEventService#publish(UpdateEvent)
  *
  * @author Sergii Leschenko
  */
-public abstract class PersistedEvent extends CascadeEvent {
+public abstract class UpdateEvent extends CascadeEvent {
 }

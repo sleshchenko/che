@@ -8,21 +8,17 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.jpa;
+package org.eclipse.che.core.db.event;
 
-import javax.persistence.RollbackException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ServerException;
 
 /**
- * Throws when any exception during cascade operation occurs.
+ * Publisher should expect {@link ConflictException} or {@link ServerException} while publishing event.
  *
- * <p>Note that in case of throwing this type of exception,
- * cascade operation transaction will be rolled back.
+ * @see CascadeEventService#publish(PersistEvent)
  *
- * @author Anton Korneta
+ * @author Sergii Leschenko
  */
-public class CascadeOperationException extends RollbackException {
-
-    public CascadeOperationException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public abstract class PersistEvent extends CascadeEvent {
 }

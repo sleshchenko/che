@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.che.api.user.server.spi.tck;
 
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.Constants;
@@ -95,7 +96,7 @@ public class CascadeEventsTest {
         ProfileDao profileDao;
 
         @Override
-        public void onCascadeEvent(PostUserPersistedEvent event) throws Exception {
+        public void onCascadeEvent(PostUserPersistedEvent event) throws ApiException {
             profileDao.create(new ProfileImpl(event.getUser().getId(),
                                               new HashMap<>()));
             profileDao.create(new ProfileImpl(event.getUser().getId(),

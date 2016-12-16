@@ -12,6 +12,7 @@ package org.eclipse.che.api.user.server.jpa;
 
 import com.google.inject.persist.Transactional;
 
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -137,7 +138,7 @@ public class JpaProfileDao implements ProfileDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
+        public void onCascadeEvent(BeforeUserRemovedEvent event) throws ApiException {
             profileDao.remove(event.getUser().getId());
         }
     }

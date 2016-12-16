@@ -8,13 +8,17 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.jpa;
+package org.eclipse.che.core.db.event;
+
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ServerException;
 
 /**
+ * Publisher should expect {@link ConflictException} or {@link ServerException} while publishing event.
+ *
+ * @see CascadeEventService#publish(RemoveEvent)
+ *
  * @author Sergii Leschenko
  */
-public class ConflictCascadeOperationException extends CascadeOperationException {
-    public ConflictCascadeOperationException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public abstract class RemoveEvent extends CascadeEvent {
 }
