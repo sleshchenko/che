@@ -389,7 +389,7 @@ public class StackServiceTest {
     /** Delete stack */
 
     @Test
-    public void stackShouldBeDeleted() throws ServerException, NotFoundException {
+    public void stackShouldBeDeleted() throws Exception {
         Response response = given().auth()
                                    .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
                                    .when()

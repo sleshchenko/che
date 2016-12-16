@@ -8,11 +8,17 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.event;
+package org.eclipse.che.core.db.cascade.event;
+
+import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.core.db.cascade.CascadeContext;
 
 /**
  * Special event type which is needed only for notification
  * in the process which can require cascade operation.
+ *
+ * <p>Rollback of operation must be performed when subscriber
+ * throws {@link ApiException} during event processing.
  *
  * @author Anton Korneta
  * @author Sergii Leschenko

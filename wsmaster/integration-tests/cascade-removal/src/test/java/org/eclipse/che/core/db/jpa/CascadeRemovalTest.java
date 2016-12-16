@@ -49,8 +49,9 @@ import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.core.db.DBInitializer;
-import org.eclipse.che.core.db.event.CascadeEvent;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
+import org.eclipse.che.core.db.cascade.event.CascadeEvent;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer;
 import org.eclipse.che.inject.lifecycle.InitModule;
@@ -125,7 +126,7 @@ public class CascadeRemovalTest {
         injector = Guice.createInjector(Stage.PRODUCTION, new AbstractModule() {
             @Override
             protected void configure() {
-                bind(EventService.class).in(Singleton.class);
+                bind(EventService.class).to(CascadeEventService.class);
                 install(new InitModule(PostConstruct.class));
                 install(new JpaPersistModule("test"));
                 bind(SchemaInitializer.class).toInstance(new FlywaySchemaInitializer(inMemoryDefault(), "che-schema"));

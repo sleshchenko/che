@@ -94,7 +94,7 @@ public interface UserDao {
      * @throws NullPointerException
      *         when {@code id} is null
      * @throws ConflictException
-     *         when given user cannot be deleted
+     *         when any conflict occurs during cascade removing of related to user data
      * @throws ServerException
      *         when any other error occurs
      */

@@ -17,11 +17,13 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
+import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
-import org.eclipse.che.core.db.event.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.security.PasswordEncryptor;
 
@@ -210,7 +212,7 @@ public class JpaUserDao implements UserDao {
         }
     }
 
-    @Transactional(rollbackOn = ApiException.class)
+    @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
     protected void doCreate(UserImpl user) throws ConflictException, ServerException {
         EntityManager manage = managerProvider.get();
         manage.persist(user);
@@ -218,8 +220,8 @@ public class JpaUserDao implements UserDao {
         eventService.publish(new PostUserPersistedEvent(new UserImpl(user)));
     }
 
-    @Transactional
-    protected void doUpdate(UserImpl update) throws NotFoundException {
+    @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
+    protected void doUpdate(UserImpl update) throws NotFoundException, ConflictException, ServerException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, update.getId());
         if (user == null) {
@@ -235,18 +237,18 @@ public class JpaUserDao implements UserDao {
         manager.merge(update);
         manager.flush();
 
-//        eventService.publish(new PostUserUpdatedEvent(originalUser,
-//                                                      new UserImpl(update)));
+        eventService.publish(new PostUserUpdatedEvent(originalUser,
+                                                      new UserImpl(update)));
     }
 
-    @Transactional
-    protected Optional<UserImpl> doRemove(String id) {
+    @Transactional(rollbackOn = {RuntimeException.class})
+    protected Optional<UserImpl> doRemove(String id) throws ConflictException, ServerException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, id);
         if (user == null) {
             return Optional.empty();
         }
-//        eventService.publish(new BeforeUserRemovedEvent(user));
+        eventService.publish(new BeforeUserRemovedEvent(user));
         manager.remove(user);
         manager.flush();
         return Optional.of(user);

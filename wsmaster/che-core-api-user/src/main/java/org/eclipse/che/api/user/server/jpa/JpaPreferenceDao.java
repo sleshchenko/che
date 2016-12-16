@@ -14,10 +14,10 @@ import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -136,9 +136,9 @@ public class JpaPreferenceDao implements PreferenceDao {
             extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
 
         @Inject
-        private EventService     eventService;
+        private CascadeEventService eventService;
         @Inject
-        private JpaPreferenceDao preferenceDao;
+        private JpaPreferenceDao    preferenceDao;
 
         @PostConstruct
         public void subscribe() {

@@ -11,14 +11,15 @@
 package org.eclipse.che.account.event;
 
 import org.eclipse.che.account.spi.AccountImpl;
-import org.eclipse.che.core.db.event.CascadeEvent;
+import org.eclipse.che.core.db.cascade.event.CascadeEvent;
+import org.eclipse.che.core.db.cascade.event.RemoveEvent;
 
 /**
  * Published before {@link AccountImpl account} removed.
  *
  * @author Antona Korneta
  */
-public class BeforeAccountRemovedEvent extends CascadeEvent {
+public class BeforeAccountRemovedEvent extends RemoveEvent {
 
     private final AccountImpl account;
 

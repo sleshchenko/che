@@ -8,7 +8,7 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.event;
+package org.eclipse.che.core.db.cascade;
 
 import org.eclipse.che.api.core.ApiException;
 

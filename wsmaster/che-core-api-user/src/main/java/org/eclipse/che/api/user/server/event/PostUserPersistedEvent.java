@@ -12,7 +12,7 @@ package org.eclipse.che.api.user.server.event;
 
 import org.eclipse.che.api.core.notification.EventOrigin;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.core.db.event.PersistEvent;
+import org.eclipse.che.core.db.cascade.event.PersistEvent;
 
 /**
  * Published after {@link UserImpl user} persisted.

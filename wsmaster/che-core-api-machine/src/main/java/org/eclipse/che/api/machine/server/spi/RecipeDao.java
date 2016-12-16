@@ -65,10 +65,12 @@ public interface RecipeDao {
      *         recipe identifier to remove recipe
      * @throws NullPointerException
      *         when recipe {@code id} is not specified
+     * @throws ConflictException
+     *         when any conflict occurs during cascade removing of related to recipe data
      * @throws ServerException
      *         when any error occurs
      */
-    void remove(String id) throws ServerException;
+    void remove(String id) throws ConflictException, ServerException;
 
     /**
      * Returns recipe with specified {@code id} or throws {@link NotFoundException}

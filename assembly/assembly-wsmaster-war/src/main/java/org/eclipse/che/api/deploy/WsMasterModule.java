@@ -24,7 +24,7 @@ import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
-import org.eclipse.che.core.db.event.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.inject.DynaModule;
 import org.flywaydb.core.internal.util.PlaceholderReplacer;
@@ -39,6 +39,8 @@ import static org.eclipse.che.inject.Matchers.names;
 public class WsMasterModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(EventService.class).to(CascadeEventService.class);
+
         // db related components modules
         install(new com.google.inject.persist.jpa.JpaPersistModule("main"));
         install(new org.eclipse.che.account.api.AccountModule());
@@ -52,7 +54,6 @@ public class WsMasterModule extends AbstractModule {
         bind(SchemaInitializer.class).to(org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer.class);
         bind(org.eclipse.che.core.db.DBInitializer.class).asEagerSingleton();
         bind(PlaceholderReplacer.class).toProvider(org.eclipse.che.core.db.schema.impl.flyway.PlaceholderReplacerProvider.class);
-        bind(EventService.class).to(CascadeEventService.class);
 
         install(new org.eclipse.che.plugin.docker.compose.ComposeModule());
 

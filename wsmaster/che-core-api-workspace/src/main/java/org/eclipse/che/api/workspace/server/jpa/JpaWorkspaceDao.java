@@ -17,14 +17,14 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.event.WorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +35,7 @@ import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -51,7 +52,7 @@ import static java.util.stream.Collectors.toList;
 public class JpaWorkspaceDao implements WorkspaceDao {
 
     @Inject
-    private EventService            eventService;
+    private CascadeEventService     eventService;
     @Inject
     private Provider<EntityManager> managerProvider;
 
@@ -89,7 +90,8 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     public void remove(String id) throws ConflictException, ServerException {
         requireNonNull(id, "Required non-null id");
         try {
-            doRemove(id);
+            Optional<WorkspaceImpl> workspaceOpt = doRemove(id);
+            workspaceOpt.ifPresent(workspace -> eventService.publish(new WorkspaceRemovedEvent(workspace)));
         } catch (RuntimeException x) {
             throw new ServerException(x.getLocalizedMessage(), x);
         }
@@ -193,15 +195,16 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     }
 
     @Transactional
-    protected void doRemove(String id) {
+    protected Optional<WorkspaceImpl> doRemove(String id) throws ConflictException, ServerException {
         final WorkspaceImpl workspace = managerProvider.get().find(WorkspaceImpl.class, id);
-        if (workspace != null) {
-            final EntityManager manager = managerProvider.get();
-            eventService.publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace)));
-            manager.remove(workspace);
-            manager.flush();
-            eventService.publish(new WorkspaceRemovedEvent(workspace));
+        if (workspace == null) {
+            return Optional.empty();
         }
+        final EntityManager manager = managerProvider.get();
+        eventService.publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace)));
+        manager.remove(workspace);
+        manager.flush();
+        return Optional.of(workspace);
     }
 
     @Transactional
@@ -223,9 +226,9 @@ public class JpaWorkspaceDao implements WorkspaceDao {
             extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
 
         @Inject
-        private EventService     eventService;
+        private CascadeEventService eventService;
         @Inject
-        private WorkspaceManager workspaceManager;
+        private WorkspaceManager    workspaceManager;
 
         @PostConstruct
         public void subscribe() {
@@ -249,9 +252,9 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     public static class RemoveSnapshotsBeforeWorkspaceRemovedEventSubscriber
             extends CascadeEventSubscriber<BeforeWorkspaceRemovedEvent> {
         @Inject
-        private EventService     eventService;
+        private CascadeEventService eventService;
         @Inject
-        private WorkspaceManager workspaceManager;
+        private WorkspaceManager    workspaceManager;
 
         @PostConstruct
         public void subscribe() {

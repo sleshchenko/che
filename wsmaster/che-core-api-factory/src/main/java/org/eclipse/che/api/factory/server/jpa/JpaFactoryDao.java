@@ -16,13 +16,13 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.commons.lang.Pair;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
@@ -180,9 +180,9 @@ public class JpaFactoryDao implements FactoryDao {
     public static class RemoveFactoriesBeforeUserRemovedEventSubscriber
             extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
         @Inject
-        private FactoryDao   factoryDao;
+        private FactoryDao          factoryDao;
         @Inject
-        private EventService eventService;
+        private CascadeEventService eventService;
 
         @PostConstruct
         public void subscribe() {

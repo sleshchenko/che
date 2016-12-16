@@ -16,13 +16,13 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
-import org.eclipse.che.core.db.event.CascadeEventSubscriber;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
+import org.eclipse.che.core.db.cascade.CascadeEventService;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
+import org.eclipse.che.core.db.jpa.DuplicateKeyException;
+import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -123,9 +123,9 @@ public class JpaProfileDao implements ProfileDao {
     public static class RemoveProfileBeforeUserRemovedEventSubscriber
             extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
         @Inject
-        private EventService  eventService;
+        private CascadeEventService eventService;
         @Inject
-        private JpaProfileDao profileDao;
+        private JpaProfileDao       profileDao;
 
         @PostConstruct
         public void subscribe() {

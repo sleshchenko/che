@@ -8,10 +8,11 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.event;
+package org.eclipse.che.core.db.cascade;
 
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.notification.EventSubscriber;
+import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 
 /**
  * Receives notification about cascade removal events and
@@ -35,8 +36,13 @@ public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements 
     /**
      * Receives notification about cascade event.
      *
-     * <p>If the method throws an unchecked exception it will be set to context
-     * to break event publishing and rethrow exception by {@link CascadeEventService}.
+     * <p>If the method throws an exception it will be set to context
+     * to break event publishing and rethrow exception.
+     * Original exception can be rethrown to publisher
+     * or it can be wrapped in {@link SecurityException} instance.
+     * It depends on event type.
+     *
+     * @see CascadeEventService
      */
     public abstract void onCascadeEvent(T event) throws ApiException;
 }

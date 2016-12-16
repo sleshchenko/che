@@ -8,28 +8,32 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.core.db.event;
+package org.eclipse.che.core.db.cascade;
 
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.core.db.cascade.event.CascadeEvent;
+import org.eclipse.che.core.db.cascade.event.PersistEvent;
+import org.eclipse.che.core.db.cascade.event.RemoveEvent;
+import org.eclipse.che.core.db.cascade.event.UpdateEvent;
 
 import javax.inject.Singleton;
 
 /**
- * Allows to throw exception during cascade event
- * publishing to cancel event.
+ * Extends {@link EventService} and allows throwing
+ * exception during cascade event publishing.
  *
  * <p>Usage example:
  * <pre>
- *     EventService bus = new CascadeEventService();
+ *     CascadeEventService bus = new CascadeEventService();
  *     bus.subscribe(new CascadeEventSubscriber&lt;MyEvent&gt;() {
  *         &#64;Override
- *         public void onCascadeEvent(MyEvent event) {
+ *         public void onCascadeEvent(MyEvent event) throws ApiException {
  *             if (event.getUsername().startsWith("reserved")) {
- *                 throw new CascadeOperationException("Username can't start with `reserved`.");
+ *                 throw new ConflictException("Username can't start with `reserved`.");
  *             }
  *         }
  *     });
@@ -47,7 +51,7 @@ public class CascadeEventService extends EventService {
      * @param event
      *         event to publish
      * @throws ApiException
-     *         when some error occurs during operation publishing
+     *         when any subscriber throws {@link ApiException}
      */
     public void publish(CascadeEvent event) throws ApiException {
         super.publish(event);
@@ -62,9 +66,11 @@ public class CascadeEventService extends EventService {
      * @param event
      *         event to publish
      * @throws ConflictException
-     *         409
+     *         when any subscriber throws {@link ConflictException}
      * @throws ServerException
-     *         500
+     *         when any subscriber throws {@link ServerException}
+     * @throws ServerException
+     *         when any subscriber throws other kind of {@link ApiException}
      */
     public void publish(PersistEvent event) throws ConflictException,
                                                    ServerException {
@@ -83,9 +89,11 @@ public class CascadeEventService extends EventService {
      * @param event
      *         event to publish
      * @throws ConflictException
-     *         409
+     *         when any subscriber throws {@link ConflictException}
      * @throws ServerException
-     *         500
+     *         when any subscriber throws {@link ServerException}
+     * @throws ServerException
+     *         when any subscriber throws other kind of {@link ApiException}
      */
     public void publish(RemoveEvent event) throws ConflictException,
                                                   ServerException {
@@ -103,14 +111,18 @@ public class CascadeEventService extends EventService {
      *
      * @param event
      *         event to publish
+     * @throws NotFoundException
+     *         when any subscriber throws {@link NotFoundException}
      * @throws ConflictException
-     *         409
+     *         when any subscriber throws {@link ConflictException}
      * @throws ServerException
-     *         500
+     *         when any subscriber throws {@link ServerException}
+     * @throws ServerException
+     *         when any subscriber throws other kind of {@link ApiException}
      */
-    public void publish(UpdateEvent event) throws ConflictException,
-                                                  ServerException,
-                                                  NotFoundException {
+    public void publish(UpdateEvent event) throws NotFoundException,
+                                                  ConflictException,
+                                                  ServerException {
         try {
             publish((CascadeEvent)event);
         } catch (NotFoundException | ConflictException | ServerException e) {
