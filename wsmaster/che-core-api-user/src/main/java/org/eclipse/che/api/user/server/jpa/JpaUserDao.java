@@ -16,14 +16,15 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
+import org.eclipse.che.core.db.event.CascadeEventService;
 import org.eclipse.che.core.db.jpa.CascadeOperationException;
+import org.eclipse.che.core.db.jpa.ConflictCascadeOperationException;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.security.PasswordEncryptor;
 
@@ -55,7 +56,7 @@ public class JpaUserDao implements UserDao {
     @Inject
     private   PasswordEncryptor       encryptor;
     @Inject
-    private   EventService            eventService;
+    private   CascadeEventService     eventService;
 
     @Override
     @Transactional
@@ -89,6 +90,8 @@ public class JpaUserDao implements UserDao {
         } catch (DuplicateKeyException x) {
             // TODO make more concrete
             throw new ConflictException("User with such id/name/email/alias already exists");
+        } catch (ConflictCascadeOperationException e) {
+            throw new ConflictException(e.getMessage());
         } catch (RuntimeException x) {
             throw new ServerException(x.getLocalizedMessage(), x);
         }
@@ -121,7 +124,6 @@ public class JpaUserDao implements UserDao {
     }
 
     @Override
-            .
     public UserImpl getByAlias(String alias) throws NotFoundException, ServerException {
         requireNonNull(alias, "Required non-null alias");
         try {
@@ -216,7 +218,7 @@ public class JpaUserDao implements UserDao {
     }
 
     @Transactional
-    protected void doCreate(UserImpl user) {
+    protected void doCreate(UserImpl user) throws ConflictCascadeOperationException {
         EntityManager manage = managerProvider.get();
         manage.persist(user);
         manage.flush();

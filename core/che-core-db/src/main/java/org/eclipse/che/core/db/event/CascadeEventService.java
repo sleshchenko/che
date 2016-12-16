@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.event;
 
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.core.db.jpa.CascadeOperationException;
+import org.eclipse.che.core.db.jpa.ConflictCascadeOperationException;
 
 import javax.inject.Singleton;
 
@@ -49,7 +51,27 @@ public class CascadeEventService extends EventService {
     public void publish(CascadeEvent event) throws CascadeOperationException {
         super.publish(event);
         if (event.getContext().isFailed()) {
-            throw new CascadeOperationException(event.getContext().getCause());
+            Exception cause = event.getContext().getCause();
+            if (cause instanceof ConflictException) {
+                throw new ConflictCascadeOperationException(cause.getMessage(), cause);
+            } else {
+                throw new CascadeOperationException(cause.getMessage(), cause);
+            }
         }
+    }
+
+    /**
+     * Publish specified {@code event}.
+     *
+     * @param event
+     *         event to publish
+     * @throws ConflictCascadeOperationException
+     *         409
+     * @throws CascadeOperationException
+     *         500
+     */
+    public void publish(PersistedEvent event) throws ConflictCascadeOperationException,
+                                                     CascadeOperationException {
+        publish((CascadeEvent)event);
     }
 }

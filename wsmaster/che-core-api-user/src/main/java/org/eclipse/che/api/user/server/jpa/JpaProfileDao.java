@@ -92,7 +92,9 @@ public class JpaProfileDao implements ProfileDao {
 
     @Transactional
     protected void doCreate(ProfileImpl profile) {
-        managerProvider.get().persist(profile);
+        EntityManager manager = managerProvider.get();
+        manager.persist(profile);
+        manager.flush();
     }
 
     @Transactional

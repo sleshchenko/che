@@ -13,6 +13,7 @@ package org.eclipse.che.api.user.server.event;
 import org.eclipse.che.api.core.notification.EventOrigin;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.core.db.event.CascadeEvent;
+import org.eclipse.che.core.db.event.PersistedEvent;
 
 /**
  * Published after {@link UserImpl user} persisted.
@@ -20,7 +21,7 @@ import org.eclipse.che.core.db.event.CascadeEvent;
  * @author Sergii Leschenko
  */
 @EventOrigin("user")
-public class PostUserPersistedEvent extends CascadeEvent {
+public class PostUserPersistedEvent extends PersistedEvent {
     private final UserImpl user;
 
     public PostUserPersistedEvent(UserImpl user) {
