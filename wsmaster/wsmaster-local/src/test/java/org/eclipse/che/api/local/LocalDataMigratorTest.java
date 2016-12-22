@@ -17,6 +17,8 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
+import org.eclipse.che.account.spi.AccountDao;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.local.storage.LocalStorageFactory;
@@ -79,6 +81,9 @@ public class LocalDataMigratorTest {
     private LocalStorageFactory factory;
 
     @Mock
+    private AccountDao accountDao;
+
+    @Mock
     private UserDao userDao;
 
     @Mock
@@ -137,6 +142,7 @@ public class LocalDataMigratorTest {
     public void shouldMigrateLocalData(String fileName, TestAction verification) throws Exception {
         dataMigrator.performMigration(baseDir.toString(),
                                       userDao,
+                                      accountDao,
                                       profileDao,
                                       preferenceDao,
                                       sshDao,
@@ -158,6 +164,7 @@ public class LocalDataMigratorTest {
 
         dataMigrator.performMigration(baseDir.toString(),
                                       userDao,
+                                      accountDao,
                                       profileDao,
                                       preferenceDao,
                                       sshDao,
@@ -223,10 +230,11 @@ public class LocalDataMigratorTest {
 
     private void storeTestData() throws Exception {
         final UserImpl user = new UserImpl("id", "email", "name");
+        final AccountImpl account= new AccountImpl("id", "name", "personal");
         final ProfileImpl profile = new ProfileImpl(user.getId());
         final Map<String, String> prefs = singletonMap("key", "value");
         final SshPairImpl sshPair = new SshPairImpl(user.getId(), "service", "name", "public", "private");
-        final WorkspaceImpl workspace = new WorkspaceImpl("id", user.getAccount(), new WorkspaceConfigImpl("name",
+        final WorkspaceImpl workspace = new WorkspaceImpl("id", account, new WorkspaceConfigImpl("name",
                                                                                                            "description",
                                                                                                            "env",
                                                                                                            emptyList(),

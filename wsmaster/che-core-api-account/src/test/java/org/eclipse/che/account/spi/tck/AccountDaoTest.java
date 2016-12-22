@@ -60,6 +60,20 @@ public class AccountDaoTest {
         accountRepo.removeAll();
     }
 
+    @Test(dependsOnMethods = "shouldGetAccountById")
+    public void shouldCreateAccount() throws Exception {
+        AccountImpl toCreate = new AccountImpl("account123", "test123", "test");
+
+        accountDao.create(toCreate);
+
+        assertEquals(toCreate, accountDao.getById(toCreate.getId()));
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldThrowNpeOnCreatingNullAccount() throws Exception {
+        accountDao.create(null);
+    }
+
     @Test
     public void shouldGetAccountById() throws Exception {
         final AccountImpl account = accounts[0];
@@ -89,12 +103,27 @@ public class AccountDaoTest {
     }
 
     @Test(expectedExceptions = NotFoundException.class)
-    public void shouldThrowNotFoundExceptionOnGettingNonExistingaccountByName() throws Exception {
+    public void shouldThrowNotFoundExceptionOnGettingNonExistingAccountByName() throws Exception {
         accountDao.getByName("non-existing-account");
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void shouldThrowNpeOnGettingAccountByNullName() throws Exception {
         accountDao.getByName(null);
+    }
+
+    @Test(dependsOnMethods = "shouldThrowNotFoundExceptionOnGettingNonExistingAccountById",
+          expectedExceptions = NotFoundException.class)
+    public void shouldRemoveAccount() throws Exception {
+        String toRemove = accounts[0].getId();
+
+        accountDao.remove(toRemove);
+
+        accountDao.getById(toRemove);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldThrowNpeOnRemovingAccountByNullId() throws Exception {
+        accountDao.remove(null);
     }
 }
