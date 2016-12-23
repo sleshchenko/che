@@ -22,5 +22,3 @@ ALTER TABLE Usr ALTER COLUMN name SET NOT NULL;
 CREATE UNIQUE INDEX index_user_name ON usr (name);
 
 ALTER TABLE usr DROP COLUMN account_id;
-
-DELETE FROM Account WHERE type='personal';
