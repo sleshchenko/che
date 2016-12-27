@@ -16,11 +16,11 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.machine.server.event.BeforeRecipeRemovedEvent;
 import org.eclipse.che.api.machine.server.event.RecipePersistedEvent;
 import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
 import org.eclipse.che.api.machine.server.spi.RecipeDao;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 
@@ -52,7 +52,7 @@ public class JpaRecipeDao implements RecipeDao {
     private Provider<EntityManager> managerProvider;
 
     @Inject
-    private CascadeEventService eventService;
+    private EventService eventService;
 
     @Override
     public void create(RecipeImpl recipe) throws ConflictException, ServerException {
@@ -79,7 +79,7 @@ public class JpaRecipeDao implements RecipeDao {
     }
 
     @Override
-    public void remove(String id) throws ConflictException, ServerException {
+    public void remove(String id) throws ServerException {
         requireNonNull(id);
         try {
             doRemove(id);
@@ -141,12 +141,12 @@ public class JpaRecipeDao implements RecipeDao {
         }
     }
 
-    @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
-    protected void doRemove(String id) throws ConflictException, ServerException {
+    @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+    protected void doRemove(String id) throws ServerException {
         final EntityManager manager = managerProvider.get();
         final RecipeImpl recipe = manager.find(RecipeImpl.class, id);
         if (recipe != null) {
-            eventService.publish(new BeforeRecipeRemovedEvent(new RecipeImpl(recipe)));
+            eventService.publish(new BeforeRecipeRemovedEvent(new RecipeImpl(recipe))).propagateException();
             manager.remove(recipe);
             manager.flush();
         }
@@ -168,6 +168,6 @@ public class JpaRecipeDao implements RecipeDao {
         EntityManager manage = managerProvider.get();
         manage.persist(recipe);
         manage.flush();
-        eventService.publish(new RecipePersistedEvent(recipe));
+        eventService.publish(new RecipePersistedEvent(recipe)).propagateException();
     }
 }

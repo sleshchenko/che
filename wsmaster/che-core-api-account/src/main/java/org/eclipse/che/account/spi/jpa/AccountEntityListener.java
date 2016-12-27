@@ -13,6 +13,7 @@ package org.eclipse.che.account.spi.jpa;
 
 import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 
 import javax.inject.Inject;
@@ -31,7 +32,7 @@ public class AccountEntityListener {
     private EventService eventService;
 
     @PreRemove
-    private void preRemove(AccountImpl account) {
-        eventService.publish(new BeforeAccountRemovedEvent(account));
+    private void preRemove(AccountImpl account) throws ServerException {
+        eventService.publish(new BeforeAccountRemovedEvent(account)).propagateException();
     }
 }

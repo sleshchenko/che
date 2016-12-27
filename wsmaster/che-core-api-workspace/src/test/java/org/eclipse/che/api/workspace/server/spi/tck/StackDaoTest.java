@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.machine.server.spi.SnapshotDao;
 import org.eclipse.che.api.workspace.server.event.BeforeStackRemovedEvent;
 import org.eclipse.che.api.workspace.server.event.StackPersistedEvent;
@@ -27,7 +28,6 @@ import org.eclipse.che.api.workspace.server.stack.image.StackIcon;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 import org.testng.annotations.AfterMethod;
@@ -73,7 +73,7 @@ public class StackDaoTest {
     private StackDao stackDao;
 
     @Inject
-    private CascadeEventService eventService;
+    private EventService eventService;
 
     @BeforeMethod
     private void createStacks() throws TckRepositoryException {
@@ -168,13 +168,13 @@ public class StackDaoTest {
     public void shouldNotRemoveStackWhenSubscriberThrowsExceptionOnStackRemoving() throws Exception {
         final StackImpl stack = stacks[0];
         CascadeEventSubscriber<BeforeStackRemovedEvent> subscriber = mockCascadeEventSubscriber();
-        doThrow(new ConflictException("error")).when(subscriber).onCascadeEvent(any());
+        doThrow(new ServerException("error")).when(subscriber).onCascadeEvent(any());
         eventService.subscribe(subscriber, BeforeStackRemovedEvent.class);
 
         try {
             stackDao.remove(stack.getId());
-            fail("StackDao#remove had to throw conflict exception");
-        } catch (ConflictException ignored) {
+            fail("StackDao#remove had to throw server exception");
+        } catch (ServerException ignored) {
         }
 
         assertEquals(stackDao.getById(stack.getId()), stack);

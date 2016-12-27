@@ -13,17 +13,16 @@ package org.eclipse.che.api.workspace.server.jpa;
 import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.event.WorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 
@@ -52,7 +51,7 @@ import static java.util.stream.Collectors.toList;
 public class JpaWorkspaceDao implements WorkspaceDao {
 
     @Inject
-    private CascadeEventService     eventService;
+    private EventService            eventService;
     @Inject
     private Provider<EntityManager> managerProvider;
 
@@ -87,7 +86,7 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     }
 
     @Override
-    public void remove(String id) throws ConflictException, ServerException {
+    public void remove(String id) throws ServerException {
         requireNonNull(id, "Required non-null id");
         try {
             Optional<WorkspaceImpl> workspaceOpt = doRemove(id);
@@ -194,14 +193,14 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         manager.flush();
     }
 
-    @Transactional
-    protected Optional<WorkspaceImpl> doRemove(String id) throws ConflictException, ServerException {
+    @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+    protected Optional<WorkspaceImpl> doRemove(String id) throws ServerException {
         final WorkspaceImpl workspace = managerProvider.get().find(WorkspaceImpl.class, id);
         if (workspace == null) {
             return Optional.empty();
         }
         final EntityManager manager = managerProvider.get();
-        eventService.publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace)));
+        eventService.publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace))).propagateException();
         manager.remove(workspace);
         manager.flush();
         return Optional.of(workspace);
@@ -226,9 +225,9 @@ public class JpaWorkspaceDao implements WorkspaceDao {
             extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
 
         @Inject
-        private CascadeEventService eventService;
+        private EventService     eventService;
         @Inject
-        private WorkspaceManager    workspaceManager;
+        private WorkspaceManager workspaceManager;
 
         @PostConstruct
         public void subscribe() {
@@ -241,7 +240,7 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeAccountRemovedEvent event) throws ApiException {
+        public void onCascadeEvent(BeforeAccountRemovedEvent event) throws Exception {
             for (WorkspaceImpl workspace : workspaceManager.getByNamespace(event.getAccount().getName())) {
                 workspaceManager.removeWorkspace(workspace.getId());
             }
@@ -252,9 +251,9 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     public static class RemoveSnapshotsBeforeWorkspaceRemovedEventSubscriber
             extends CascadeEventSubscriber<BeforeWorkspaceRemovedEvent> {
         @Inject
-        private CascadeEventService eventService;
+        private EventService     eventService;
         @Inject
-        private WorkspaceManager    workspaceManager;
+        private WorkspaceManager workspaceManager;
 
         @PostConstruct
         public void subscribe() {
@@ -267,7 +266,7 @@ public class JpaWorkspaceDao implements WorkspaceDao {
         }
 
         @Override
-        public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws ApiException {
+        public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws Exception {
             workspaceManager.removeSnapshots(event.getWorkspace().getId());
         }
     }

@@ -61,12 +61,10 @@ public interface StackDao {
      *         stack identifier to remove stack
      * @throws NullPointerException
      *         when {@code id} is null
-     * @throws ConflictException
-     *         when any conflict occurs during cascade removing of related to stack data
      * @throws ServerException
      *         when any error occurs
      */
-    void remove(String id) throws ConflictException, ServerException;
+    void remove(String id) throws ServerException;
 
     /**
      * Update stack with new entity, actually replaces(not merges) existed stack.

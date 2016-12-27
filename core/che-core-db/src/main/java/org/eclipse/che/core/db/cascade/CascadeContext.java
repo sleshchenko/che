@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.cascade;
 
-import org.eclipse.che.api.core.ApiException;
-
 /**
  * Context that is used only for sharing the state
  * of the cascading operation among subscribers.
@@ -20,12 +18,12 @@ import org.eclipse.che.api.core.ApiException;
  * @author Sergii Leshchenko
  */
 public class CascadeContext {
-    private ApiException cause;
+    private Exception cause;
 
     /**
      * Returns the cause which has changed the state of the context.
      */
-    public ApiException getCause() {
+    public Exception getCause() {
         return cause;
     }
 
@@ -39,7 +37,7 @@ public class CascadeContext {
     /**
      * Sets the context into failed state.
      */
-    public CascadeContext fail(ApiException cause) {
+    public CascadeContext fail(Exception cause) {
         this.cause = cause;
         return this;
     }

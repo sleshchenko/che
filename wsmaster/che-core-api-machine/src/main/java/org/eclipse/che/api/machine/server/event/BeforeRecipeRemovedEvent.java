@@ -11,7 +11,6 @@
 package org.eclipse.che.api.machine.server.event;
 
 import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
-import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 import org.eclipse.che.core.db.cascade.event.RemoveEvent;
 
 /**

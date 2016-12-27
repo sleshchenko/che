@@ -12,16 +12,26 @@ package org.eclipse.che.core.db.cascade.event;
 
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 
 /**
  * Cascade event about an entity persisting.
  *
- * <p>{@link ConflictException} or {@link ServerException} can be thrown
- * during event publishing.
+ * <p>{@link ConflictException} or {@link ServerException} can be rethrown
+ * during exception propagating.
  *
  * @author Sergii Leschenko
- * @see CascadeEventService#publish(PersistEvent)
  */
 public abstract class PersistEvent extends CascadeEvent {
+    @Override
+    public void propagateException() throws ConflictException, ServerException {
+        if (context.isFailed()) {
+            try {
+                throw context.getCause();
+            } catch (ConflictException | ServerException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new ServerException(e.getLocalizedMessage(), e);
+            }
+        }
+    }
 }

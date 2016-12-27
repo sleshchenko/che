@@ -93,12 +93,10 @@ public interface UserDao {
      *         user identifier
      * @throws NullPointerException
      *         when {@code id} is null
-     * @throws ConflictException
-     *         when any conflict occurs during cascade removing of related to user data
      * @throws ServerException
      *         when any other error occurs
      */
-    void remove(String id) throws ServerException, ConflictException;
+    void remove(String id) throws ServerException;
 
     /**
      * Finds user by his alias.

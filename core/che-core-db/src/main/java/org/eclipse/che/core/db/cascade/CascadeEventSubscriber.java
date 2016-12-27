@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.che.core.db.cascade;
 
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 
 /**
- * Receives notification about cascade removal events and
- * puts exceptions in the removal context.
+ * Receives events and puts exceptions in the context
+ * to perform rollback operation if it is necessary.
  *
  * @author Anton Korneta
  * @author Sergii Leschenko
@@ -27,7 +26,7 @@ public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements 
         if (!event.getContext().isFailed()) {
             try {
                 onCascadeEvent(event);
-            } catch (ApiException ex) {
+            } catch (Exception ex) {
                 event.getContext().fail(ex);
             }
         }
@@ -38,11 +37,9 @@ public abstract class CascadeEventSubscriber<T extends CascadeEvent> implements 
      *
      * <p>If the method throws an exception it will be set to context
      * to break event publishing and rethrow exception.
-     * Original exception can be rethrown to publisher
-     * or it can be wrapped in {@link SecurityException} instance.
-     * It depends on event type.
+     * Event is responsible for rethrowing or wrapping original exception.
      *
-     * @see CascadeEventService
+     * @see CascadeEvent#propagateException()
      */
-    public abstract void onCascadeEvent(T event) throws ApiException;
+    public abstract void onCascadeEvent(T event) throws Exception;
 }

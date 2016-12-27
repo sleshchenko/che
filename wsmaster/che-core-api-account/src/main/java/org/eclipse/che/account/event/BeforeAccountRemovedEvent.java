@@ -11,7 +11,6 @@
 package org.eclipse.che.account.event;
 
 import org.eclipse.che.account.spi.AccountImpl;
-import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 import org.eclipse.che.core.db.cascade.event.RemoveEvent;
 
 /**

@@ -13,12 +13,13 @@ package org.eclipse.che.api.user.server.spi.tck;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.user.server.Constants;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
-import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
@@ -26,7 +27,6 @@ import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 import org.testng.annotations.AfterMethod;
@@ -69,7 +69,7 @@ public class UserDaoTest {
     private UserDao userDao;
 
     @Inject
-    private CascadeEventService eventService;
+    private EventService eventService;
 
     @Inject
     private TckRepository<UserImpl> tckRepository;
@@ -350,28 +350,6 @@ public class UserDaoTest {
         assertEquals(new HashSet<>(updated.getAliases()), new HashSet<>(asList("google:new-alias", "github:new-alias")));
     }
 
-    @Test(dependsOnMethods = "shouldGetUserById")
-    public void shouldNotUpdateUserWhenSubscriberThrowsExceptionOnUserUpdating() throws Exception {
-        final UserImpl user = users[0];
-
-        CascadeEventSubscriber<PostUserUpdatedEvent> subscriber = mockCascadeEventSubscriber();
-        doThrow(new ConflictException("error")).when(subscriber).onCascadeEvent(any());
-        eventService.subscribe(subscriber, PostUserUpdatedEvent.class);
-
-        try {
-            userDao.update(new UserImpl(user.getId(),
-                                        "new-email",
-                                        "new-name",
-                                        null,
-                                        asList("google:new-alias", "github:new-alias")));
-            fail("UserDao#update had to throw conflict exception");
-        } catch (ConflictException ignored) {
-        }
-
-        eventService.unsubscribe(subscriber, PostUserUpdatedEvent.class);
-        assertEqualsNoPassword(userDao.getById(user.getId()), user);
-    }
-
     @Test(expectedExceptions = ConflictException.class)
     public void shouldThrowConflictExceptionWhenUpdatingUserWithReservedEmail() throws Exception {
         final UserImpl user = users[0];
@@ -454,13 +432,13 @@ public class UserDaoTest {
     public void shouldNotRemoveUserWhenSubscriberThrowsExceptionOnUserRemoving() throws Exception {
         final UserImpl user = users[0];
         CascadeEventSubscriber<BeforeUserRemovedEvent> subscriber = mockCascadeEventSubscriber();
-        doThrow(new ConflictException("error")).when(subscriber).onCascadeEvent(any());
+        doThrow(new ServerException("error")).when(subscriber).onCascadeEvent(any());
         eventService.subscribe(subscriber, BeforeUserRemovedEvent.class);
 
         try {
             userDao.remove(user.getId());
-            fail("UserDao#remove had to throw conflict exception");
-        } catch (ConflictException ignored) {
+            fail("UserDao#remove had to throw server exception");
+        } catch (ServerException ignored) {
         }
 
         assertEqualsNoPassword(userDao.getById(user.getId()), user);

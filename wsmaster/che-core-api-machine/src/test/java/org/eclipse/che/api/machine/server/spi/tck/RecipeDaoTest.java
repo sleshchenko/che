@@ -15,16 +15,15 @@ import com.google.common.collect.ImmutableSet;
 
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.machine.server.event.BeforeRecipeRemovedEvent;
 import org.eclipse.che.api.machine.server.event.RecipePersistedEvent;
 import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
 import org.eclipse.che.api.machine.server.spi.RecipeDao;
-import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.cascade.event.CascadeEvent;
 import org.testng.annotations.AfterMethod;
@@ -68,7 +67,7 @@ public class RecipeDaoTest {
     private TckRepository<RecipeImpl> tckRepository;
 
     @Inject
-    private CascadeEventService eventService;
+    private EventService eventService;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -164,13 +163,13 @@ public class RecipeDaoTest {
     public void shouldNotRemoveRecipeWhenSubscriberThrowsExceptionOnRecipeRemoving() throws Exception {
         final RecipeImpl recipe = recipes.get(0);
         CascadeEventSubscriber<BeforeRecipeRemovedEvent> subscriber = mockCascadeEventSubscriber();
-        doThrow(new ConflictException("error")).when(subscriber).onCascadeEvent(any());
+        doThrow(new ServerException("error")).when(subscriber).onCascadeEvent(any());
         eventService.subscribe(subscriber, BeforeRecipeRemovedEvent.class);
 
         try {
             recipeDao.remove(recipe.getId());
-            fail("RecipeDao#remove had to throw conflict exception");
-        } catch (ConflictException ignored) {
+            fail("RecipeDao#remove had to throw server exception");
+        } catch (ServerException ignored) {
         }
 
         assertEquals(recipeDao.getById(recipe.getId()), recipe);

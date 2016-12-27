@@ -17,13 +17,12 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
-import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
-import org.eclipse.che.core.db.cascade.CascadeEventService;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.security.PasswordEncryptor;
 
@@ -55,7 +54,7 @@ public class JpaUserDao implements UserDao {
     @Inject
     private   PasswordEncryptor       encryptor;
     @Inject
-    private   CascadeEventService     eventService;
+    private   EventService            eventService;
 
     @Override
     @Transactional
@@ -108,7 +107,7 @@ public class JpaUserDao implements UserDao {
     }
 
     @Override
-    public void remove(String id) throws ServerException, ConflictException {
+    public void remove(String id) throws ServerException {
         requireNonNull(id, "Required non-null id");
         try {
             Optional<UserImpl> userOpt = doRemove(id);
@@ -217,17 +216,16 @@ public class JpaUserDao implements UserDao {
         EntityManager manage = managerProvider.get();
         manage.persist(user);
         manage.flush();
-        eventService.publish(new PostUserPersistedEvent(new UserImpl(user)));
+        eventService.publish(new PostUserPersistedEvent(new UserImpl(user))).propagateException();
     }
 
-    @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
-    protected void doUpdate(UserImpl update) throws NotFoundException, ConflictException, ServerException {
+    @Transactional
+    protected void doUpdate(UserImpl update) throws NotFoundException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, update.getId());
         if (user == null) {
             throw new NotFoundException(format("Couldn't update user with id '%s' because it doesn't exist", update.getId()));
         }
-        UserImpl originalUser = new UserImpl(user);
         final String password = update.getPassword();
         if (password != null) {
             update.setPassword(encryptor.encrypt(password));
@@ -236,19 +234,16 @@ public class JpaUserDao implements UserDao {
         }
         manager.merge(update);
         manager.flush();
-
-        eventService.publish(new PostUserUpdatedEvent(originalUser,
-                                                      new UserImpl(update)));
     }
 
-    @Transactional(rollbackOn = {RuntimeException.class})
-    protected Optional<UserImpl> doRemove(String id) throws ConflictException, ServerException {
+    @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+    protected Optional<UserImpl> doRemove(String id) throws ServerException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, id);
         if (user == null) {
             return Optional.empty();
         }
-        eventService.publish(new BeforeUserRemovedEvent(user));
+        eventService.publish(new BeforeUserRemovedEvent(user)).propagateException();
         manager.remove(user);
         manager.flush();
         return Optional.of(user);
