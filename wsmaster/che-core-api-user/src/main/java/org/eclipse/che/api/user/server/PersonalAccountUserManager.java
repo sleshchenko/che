@@ -21,13 +21,14 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
+ * //TODO Move to onpremises
+ *
  * @author Sergii Leschenko
  */
 @Singleton
@@ -42,7 +43,6 @@ public class PersonalAccountUserManager extends UserManager {
                                       AccountManager accountManager) {
         super(userDao, profileDao, preferencesDao, reservedNames);
         this.accountManager = accountManager;
-        LoggerFactory.getLogger("Test").info("PersonalAccountUserManager is installed");
     }
 
     @Transactional(rollbackOn = {NotFoundException.class, ServerException.class, ConflictException.class})
@@ -65,12 +65,5 @@ public class PersonalAccountUserManager extends UserManager {
         }
 
         super.update(user);
-    }
-
-    @Transactional(rollbackOn = {NotFoundException.class, ServerException.class, ConflictException.class})
-    @Override
-    public void remove(String id) throws ServerException, ConflictException {
-        super.remove(id);
-        accountManager.remove(id);
     }
 }

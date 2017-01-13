@@ -11,6 +11,7 @@
 package org.eclipse.che.api.user.server;
 
 import org.eclipse.che.account.api.AccountManager;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -52,6 +53,15 @@ public class CheUserCreator {
                                                       "secret",
                                                       emptyList());
                 userManager.create(cheUser, false);
+            } catch (ConflictException ignore) {
+            }
+        }
+
+        try {
+            accountManager.getById("che");
+        } catch (NotFoundException e) {
+            try {
+                accountManager.create(new AccountImpl("che", "che", "personal"));
             } catch (ConflictException ignore) {
             }
         }
