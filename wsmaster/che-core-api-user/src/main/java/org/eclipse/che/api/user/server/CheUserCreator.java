@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.che.api.user.server;
 
+import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -34,6 +35,8 @@ public class CheUserCreator {
     private UserManager userManager;
 
     @Inject
+    private AccountManager accountManager;
+
     @SuppressWarnings("unused")
     private DBInitializer initializer;
 

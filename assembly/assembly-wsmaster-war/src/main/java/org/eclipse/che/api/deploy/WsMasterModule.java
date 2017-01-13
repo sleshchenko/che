@@ -19,7 +19,9 @@ import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.MessageBodyAdapter;
 import org.eclipse.che.api.core.rest.MessageBodyAdapterInterceptor;
 import org.eclipse.che.api.machine.shared.Constants;
+import org.eclipse.che.api.user.server.PersonalAccountUserManager;
 import org.eclipse.che.api.user.server.TokenValidator;
+import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
@@ -54,6 +56,8 @@ public class WsMasterModule extends AbstractModule {
         install(new org.eclipse.che.plugin.docker.compose.ComposeModule());
 
         bind(org.eclipse.che.api.user.server.CheUserCreator.class);
+//        bind(org.eclipse.che.api.user.server.PersonalAccountProvider.class);
+        bind(UserManager.class).to(PersonalAccountUserManager.class);
 
         bind(TokenValidator.class).to(org.eclipse.che.api.local.DummyTokenValidator.class);
         bind(org.eclipse.che.api.local.LocalDataMigrator.class).asEagerSingleton();

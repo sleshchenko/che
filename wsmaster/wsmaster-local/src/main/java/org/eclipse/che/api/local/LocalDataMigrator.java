@@ -15,6 +15,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.account.spi.AccountDao;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.model.machine.Recipe;
 import org.eclipse.che.api.core.model.project.ProjectConfig;
@@ -87,6 +89,7 @@ public class LocalDataMigrator {
     @PostConstruct
     public void performMigration(@Named("che.database") String baseDir,
                                  UserDao userDao,
+                                 AccountDao accountDao,
                                  ProfileDao profileDao,
                                  PreferenceDao preferenceDao,
                                  SshDao sshDao,
@@ -104,11 +107,11 @@ public class LocalDataMigrator {
                                                                Recipe.class, new RecipeTypeAdapter(),
                                                                ProjectConfig.class, new ProjectConfigAdapter(),
                                                                WorkspaceConfigImpl.class, new WorkspaceConfigDeserializer(cfgAdapter));
-        migrations.add(new UserMigration(factory.create(LocalUserDaoImpl.FILENAME), userDao));
+        migrations.add(new UserMigration(factory.create(LocalUserDaoImpl.FILENAME), userDao, accountDao));
         migrations.add(new ProfileMigration(factory.create(LocalProfileDaoImpl.FILENAME), profileDao));
         migrations.add(new PreferencesMigration(factory.create(LocalPreferenceDaoImpl.FILENAME), preferenceDao));
         migrations.add(new SshKeyMigration(factory.create(LocalSshDaoImpl.FILENAME), sshDao));
-        migrations.add(new WorkspaceMigration(factory.create(LocalWorkspaceDaoImpl.FILENAME, adapters), workspaceDao, userDao));
+        migrations.add(new WorkspaceMigration(factory.create(LocalWorkspaceDaoImpl.FILENAME, adapters), workspaceDao, accountDao));
         migrations.add(new SnapshotMigration(factory.create(LocalSnapshotDaoImpl.FILENAME), snapshotDao));
         migrations.add(new RecipeMigration(factory.create(LocalRecipeDaoImpl.FILENAME), recipeDao));
         migrations.add(new StackMigration(factory.create(StackLocalStorage.STACK_STORAGE_FILE,
@@ -223,10 +226,12 @@ public class LocalDataMigrator {
 
     public static class UserMigration extends Migration<UserImpl> {
         private final UserDao userDao;
+        private final AccountDao accountDao;
 
-        public UserMigration(LocalStorage localStorage, UserDao userDao) {
+        public UserMigration(LocalStorage localStorage, UserDao userDao, AccountDao accountDao) {
             super("User", localStorage);
             this.userDao = userDao;
+            this.accountDao = accountDao;
         }
 
         @Override
@@ -236,6 +241,7 @@ public class LocalDataMigrator {
 
         @Override
         public void migrate(UserImpl entity) throws Exception {
+            accountDao.create(new AccountImpl(entity.getId(), entity.getName(), "personal"));
             userDao.create(entity);
         }
 
@@ -347,12 +353,12 @@ public class LocalDataMigrator {
     public static class WorkspaceMigration extends Migration<WorkspaceImpl> {
 
         private final WorkspaceDao workspaceDao;
-        private final UserDao userDao;
+        private final AccountDao   accountDao;
 
-        public WorkspaceMigration(LocalStorage localStorage, WorkspaceDao workspaceDao, UserDao userDao) {
+        public WorkspaceMigration(LocalStorage localStorage, WorkspaceDao workspaceDao, AccountDao accountDao) {
             super("Workspace", localStorage);
             this.workspaceDao = workspaceDao;
-            this.userDao = userDao;
+            this.accountDao = accountDao;
         }
 
         @Override
@@ -362,7 +368,7 @@ public class LocalDataMigrator {
 
         @Override
         public void migrate(WorkspaceImpl entity) throws Exception {
-            entity.setAccount(userDao.getByName(entity.getNamespace()).getAccount());
+            entity.setAccount(accountDao.getByName(entity.getNamespace()));
             entity.getConfig().setName(entity.getConfig().getName());
             workspaceDao.create(entity);
         }
