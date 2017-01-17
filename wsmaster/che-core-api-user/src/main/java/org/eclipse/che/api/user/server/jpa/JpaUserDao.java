@@ -20,7 +20,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
-import org.eclipse.che.api.user.server.event.PostUserUpdatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
@@ -220,7 +219,7 @@ public class JpaUserDao implements UserDao {
         eventService.publish(new PostUserPersistedEvent(new UserImpl(user))).propagateException();
     }
 
-    @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
+    @Transactional
     protected void doUpdate(UserImpl update) throws NotFoundException, ConflictException, ServerException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, update.getId());
@@ -235,7 +234,6 @@ public class JpaUserDao implements UserDao {
         }
         manager.merge(update);
         manager.flush();
-        eventService.publish(new PostUserUpdatedEvent(user, update)).propagateException();
     }
 
     @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
