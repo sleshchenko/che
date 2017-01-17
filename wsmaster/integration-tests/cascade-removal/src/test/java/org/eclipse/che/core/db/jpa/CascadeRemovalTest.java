@@ -102,8 +102,6 @@ public class CascadeRemovalTest {
     private SnapshotDao   snapshotDao;
     private SshDao        sshDao;
 
-    //TODO Rework tests to accordance with PersonalAccountProvider
-    //TODO think about automatically removing of personal account in che-core-api-user PersonalAccountCreator
     /** Account and User are a root of dependency tree. */
     private AccountImpl account;
     private UserImpl    user;

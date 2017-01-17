@@ -220,7 +220,7 @@ public class JpaUserDao implements UserDao {
     }
 
     @Transactional
-    protected void doUpdate(UserImpl update) throws NotFoundException, ConflictException, ServerException {
+    protected void doUpdate(UserImpl update) throws NotFoundException {
         final EntityManager manager = managerProvider.get();
         final UserImpl user = manager.find(UserImpl.class, update.getId());
         if (user == null) {

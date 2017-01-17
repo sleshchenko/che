@@ -9,7 +9,7 @@
 --   Codenvy, S.A. - initial API and implementation
 --
 
--- account changes
+-- move account out of user
 ALTER TABLE Usr ADD name VARCHAR(255);
 
 UPDATE Usr
