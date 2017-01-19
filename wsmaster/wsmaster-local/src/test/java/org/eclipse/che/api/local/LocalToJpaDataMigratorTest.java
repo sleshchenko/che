@@ -24,7 +24,10 @@ import com.google.inject.Stage;
 import com.google.inject.name.Names;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
+import org.eclipse.che.account.api.AccountModule;
 import org.eclipse.che.account.shared.model.Account;
+import org.eclipse.che.account.spi.AccountDao;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.local.storage.LocalStorageFactory;
 import org.eclipse.che.api.local.storage.stack.StackLocalStorage;
 import org.eclipse.che.api.machine.server.jpa.MachineJpaModule;
@@ -86,6 +89,7 @@ public class LocalToJpaDataMigratorTest {
     private Injector                   injector;
     private LocalDataMigrator          migrator;
     private Path                       workingDir;
+    private AccountDao                 accountDao;
     private UserDao                    userDao;
     private ProfileDao                 profileDao;
     private PreferenceDao              preferenceDao;
@@ -110,6 +114,7 @@ public class LocalToJpaDataMigratorTest {
                 bind(SchemaInitializer.class).toInstance(initializer);
                 bind(DBInitializer.class).asEagerSingleton();
                 install(new JpaPersistModule("test"));
+                install(new AccountModule());
                 install(new UserJpaModule());
                 install(new SshJpaModule());
                 install(new WorkspaceJpaModule());
@@ -119,6 +124,7 @@ public class LocalToJpaDataMigratorTest {
             }
         });
         userDao = injector.getInstance(UserDao.class);
+        accountDao = injector.getInstance(AccountDao.class);
         preferenceDao = injector.getInstance(PreferenceDao.class);
         profileDao = injector.getInstance(ProfileDao.class);
         sshDao = injector.getInstance(SshDao.class);
@@ -142,6 +148,7 @@ public class LocalToJpaDataMigratorTest {
     public void shouldSuccessfullyPerformMigration() throws Exception {
         migrator.performMigration(workingDir.toString(),
                                   userDao,
+                                  accountDao,
                                   profileDao,
                                   preferenceDao,
                                   sshDao,
@@ -158,6 +165,7 @@ public class LocalToJpaDataMigratorTest {
         Files.delete(workingDir.resolve(filename));
         migrator.performMigration(workingDir.toString(),
                                   userDao,
+                                  accountDao,
                                   profileDao,
                                   preferenceDao,
                                   sshDao,
@@ -179,10 +187,11 @@ public class LocalToJpaDataMigratorTest {
 
     private void storeTestData() throws Exception {
         final UserImpl user = createUser("user123");
+        final AccountImpl account = createAccount("user123");
         final ProfileImpl profile = createProfile(user.getId());
         final Map<String, String> preferences = createPreferences();
         final SshPairImpl pair = createSshPair(user.getId(), "service", "name");
-        final WorkspaceImpl workspace = createWorkspace("id", user.getAccount());
+        final WorkspaceImpl workspace = createWorkspace("id", account);
         final SnapshotImpl snapshot = createSnapshot("snapshot123", workspace.getId());
         final RecipeImpl recipe = createRecipe("recipe123");
         final StackImpl stack = createStack("stack123", "stack-name");
@@ -218,6 +227,12 @@ public class LocalToJpaDataMigratorTest {
             result.add("publicKey", new JsonPrimitive(sshPair.getPrivateKey()));
             return result;
         }
+    }
+
+    public static AccountImpl createAccount(String id) {
+        return new AccountImpl(id,
+                               id + "_name",
+                               "personal");
     }
 
     public static UserImpl createUser(String id) {
