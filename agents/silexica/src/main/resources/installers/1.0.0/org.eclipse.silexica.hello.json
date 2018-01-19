@@ -1,0 +1,9 @@
+{
+  "id": "org.eclipse.silexica.hello",
+  "version": "1.0.0",
+  "name": "Silexica Hello",
+  "description": "Silexica Hello",
+  "dependencies": [],
+  "properties": {},
+  "servers": {}
+}

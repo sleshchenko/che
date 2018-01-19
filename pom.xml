@@ -184,6 +184,11 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che</groupId>
+                <artifactId>installer-silexica</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che</groupId>
                 <artifactId>ls-csharp-agent</artifactId>
                 <version>${che.version}</version>
             </dependency>
