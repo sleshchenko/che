@@ -28,6 +28,10 @@ import io.fabric8.openshift.api.model.ProjectRequestFluent.MetadataNested;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.ProjectRequestOperation;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesIngresses;
+import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPersistentVolumeClaims;
+import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPods;
+import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesServices;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -46,22 +50,22 @@ public class OpenShiftProjectTest {
   public static final String PROJECT_NAME = "testProject";
   public static final String WORKSPACE_ID = "workspace123";
 
-  @Mock private OpenShiftPods pods;
-  @Mock private OpenShiftServices services;
+  @Mock private KubernetesPods pods;
+  @Mock private KubernetesServices services;
   @Mock private OpenShiftRoutes routes;
-  @Mock private OpenShiftPersistentVolumeClaims pvcs;
+  @Mock private KubernetesPersistentVolumeClaims pvcs;
+  @Mock private KubernetesIngresses ingresses;
   @Mock private OpenShiftClientFactory clientFactory;
   @Mock private OpenShiftClient openShiftClient;
-  @Mock private KubernetesIngress kubernetesIngress;
 
   private OpenShiftProject openShiftProject;
 
   @BeforeMethod
   public void setUp() throws Exception {
     when(clientFactory.create()).thenReturn(openShiftClient);
+    when(openShiftClient.adapt(OpenShiftClient.class)).thenReturn(openShiftClient);
 
-    openShiftProject =
-        new OpenShiftProject(WORKSPACE_ID, pods, services, routes, pvcs, kubernetesIngress);
+    openShiftProject = new OpenShiftProject(WORKSPACE_ID, pods, services, routes, pvcs, ingresses);
   }
 
   @Test
@@ -94,15 +98,15 @@ public class OpenShiftProjectTest {
     // when
     openShiftProject.cleanUp();
 
-    verify(pods).delete();
-    verify(services).delete();
     verify(routes).delete();
+    verify(services).delete();
+    verify(pods).delete();
   }
 
   @Test
   public void testOpenShiftProjectCleaningUpIfExceptionsOccurs() throws Exception {
-    doThrow(new InfrastructureException("err1.")).when(pods).delete();
-    doThrow(new InfrastructureException("err2.")).when(services).delete();
+    doThrow(new InfrastructureException("err1.")).when(services).delete();
+    doThrow(new InfrastructureException("err2.")).when(pods).delete();
 
     InfrastructureException error = null;
     // when
