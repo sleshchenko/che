@@ -118,6 +118,10 @@ public class KubernetesBootstrapper extends AbstractBootstrapper {
 
   private void injectBootstrapper() throws InfrastructureException {
     String machineName = kubernetesMachine.getName();
+
+    // TODO Dirty Workaround PVC permissions issue
+    kubernetesMachine.exec("sudo", "sh", "-c", "chown -R user:root /workspace_logs");
+
     LOG.debug(
         "Bootstrapping {}:{}. Creating folder for bootstrapper", runtimeIdentity, machineName);
     kubernetesMachine.exec("mkdir", "-p", BOOTSTRAPPER_DIR, bootstrapperLogsFolder);
