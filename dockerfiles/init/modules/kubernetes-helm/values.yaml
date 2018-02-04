@@ -1,0 +1,16 @@
+global:
+  namespace: che6-ns1
+
+ingress:
+  host: 192.168.99.102
+  useHostname: false
+
+registry:
+  host: my-registry.io
+  username: my-username
+  password: my-password
+
+cheImage: my-registry.io/my-repo/che-server:latest
+cheImagePullPolicy: Always
+
+tlsEnabled: false
