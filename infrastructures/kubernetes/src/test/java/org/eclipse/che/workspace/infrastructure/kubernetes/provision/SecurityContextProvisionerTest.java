@@ -64,7 +64,7 @@ public class SecurityContextProvisionerTest {
   @Test
   public void shouldProvisionSecurityContextIfItIsConfigured() throws Exception {
     // given
-    securityContextProvisioner = new SecurityContextProvisioner(1L, 2L);
+    securityContextProvisioner = new SecurityContextProvisioner("1", "2");
 
     // when
     securityContextProvisioner.provision(kubernetesEnvironment, runtimeIdentity);

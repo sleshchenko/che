@@ -27,10 +27,10 @@ public class SecurityContextProvisioner implements ConfigurationProvisioner<Kube
 
   @Inject
   public SecurityContextProvisioner(
-      @Nullable @Named("che.infra.kubernetes.pod.security_context.run_as_user") Long runAsUser,
-      @Nullable @Named("che.infra.kubernetes.pod.security_context.fs_group") Long fsGroup) {
-    this.runAsUser = runAsUser;
-    this.fsGroup = fsGroup;
+      @Nullable @Named("che.infra.kubernetes.pod.security_context.run_as_user") String runAsUser,
+      @Nullable @Named("che.infra.kubernetes.pod.security_context.fs_group") String fsGroup) {
+    this.runAsUser = runAsUser == null ? null : Long.parseLong(runAsUser);
+    this.fsGroup = fsGroup == null ? null : Long.parseLong(fsGroup);
   }
 
   @Override
