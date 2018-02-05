@@ -122,9 +122,16 @@ public class KubernetesNamespace {
     }
   }
 
-  private void create(String namespaceName, KubernetesClient client) throws InfrastructureException {
+  private void create(String namespaceName, KubernetesClient client)
+      throws InfrastructureException {
     try {
-      client.namespaces().createNew().withNewMetadata().withName(namespaceName).endMetadata().done();
+      client
+          .namespaces()
+          .createNew()
+          .withNewMetadata()
+          .withName(namespaceName)
+          .endMetadata()
+          .done();
     } catch (KubernetesClientException e) {
       throw new InfrastructureException(e.getMessage(), e);
     }

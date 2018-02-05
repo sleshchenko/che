@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
  * Cleans the workspace related Kubernetes resources after {@code WorkspaceRemovedEvent}.
  *
  * <p>Note that depending on a configuration different types of cleaners may be chosen. In case of
- * configuration when new Kubernetes namespace created for each workspace, the whole namespace
- * will be removed, after workspace removal.
+ * configuration when new Kubernetes namespace created for each workspace, the whole namespace will
+ * be removed, after workspace removal.
  *
  * @author Anton Korneta
  */

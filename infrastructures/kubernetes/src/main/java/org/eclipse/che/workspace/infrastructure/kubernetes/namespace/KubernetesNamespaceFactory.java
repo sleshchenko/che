@@ -39,7 +39,8 @@ public class KubernetesNamespaceFactory {
   }
 
   public KubernetesNamespace create(String workspaceId) throws InfrastructureException {
-    final String namespaceName = isNullOrEmpty(this.namespaceName) ? workspaceId : this.namespaceName;
+    final String namespaceName =
+        isNullOrEmpty(this.namespaceName) ? workspaceId : this.namespaceName;
     return new KubernetesNamespace(clientFactory, namespaceName, workspaceId);
   }
 }
