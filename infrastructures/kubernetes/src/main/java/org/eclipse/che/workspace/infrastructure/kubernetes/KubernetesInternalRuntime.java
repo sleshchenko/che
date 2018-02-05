@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.assistedinject.Assisted;
 import io.fabric8.kubernetes.api.model.Container;
@@ -122,7 +121,7 @@ public class KubernetesInternalRuntime<
       final KubernetesEnvironment k8sEnv = context.getEnvironment();
       volumesStrategy.prepare(k8sEnv, workspaceId);
 
-      createMachines();
+      startMachines();
 
       // TODO Rework it to parallel waiting https://github.com/eclipse/che/issues/7067
       for (KubernetesMachine machine : machines.values()) {
@@ -162,8 +161,29 @@ public class KubernetesInternalRuntime<
     }
   }
 
-  // TODO Think about method name
-  protected void createMachines() throws InfrastructureException {
+  @Override
+  public Map<String, ? extends Machine> getInternalMachines() {
+    return ImmutableMap.copyOf(machines);
+  }
+
+  @Override
+  protected void internalStop(Map<String, String> stopOptions) throws InfrastructureException {
+    // Cancels workspace servers probes if any
+    probeScheduler.cancel(getContext().getIdentity().getWorkspaceId());
+    project.cleanUp();
+  }
+
+  @Override
+  public Map<String, String> getProperties() {
+    return emptyMap();
+  }
+
+  /**
+   * Create all machine related objects and start machines.
+   *
+   * @throws InfrastructureException when any error occurs while creating Kubernetes objects
+   */
+  protected void startMachines() throws InfrastructureException {
     KubernetesEnvironment k8sEnv = getContext().getEnvironment();
     List<Service> createdServices = new ArrayList<>();
     for (Service service : k8sEnv.getServices().values()) {
@@ -178,7 +198,40 @@ public class KubernetesInternalRuntime<
     // project.pods().watch(new AbnormalStopHandler());
     // project.pods().watchContainers(new MachineLogsPublisher());
 
-    createPods(createdServices, readyIngresses);
+    final KubernetesServerResolver serverResolver =
+        new KubernetesServerResolver(createdServices, readyIngresses);
+
+    doStartMachine(serverResolver);
+  }
+
+  /**
+   * Creates Kubernetes pods and resolves servers using the specified serverResolver.
+   *
+   * @param serverResolver server resolver that provide servers by container
+   * @throws InfrastructureException when any error occurs while creating Kubernetes pods
+   */
+  protected void doStartMachine(KubernetesServerResolver serverResolver)
+      throws InfrastructureException {
+    final KubernetesEnvironment environment = getContext().getEnvironment();
+    final Map<String, InternalMachineConfig> machineConfigs = environment.getMachines();
+    for (Pod toCreate : environment.getPods().values()) {
+      final Pod createdPod = project.pods().create(toCreate);
+      final ObjectMeta podMetadata = createdPod.getMetadata();
+      for (Container container : createdPod.getSpec().getContainers()) {
+        String machineName = Names.machineName(toCreate, container);
+        KubernetesMachine machine =
+            new KubernetesMachine(
+                machineName,
+                podMetadata.getName(),
+                container.getName(),
+                serverResolver.resolve(machineName),
+                project,
+                MachineStatus.STARTING,
+                machineConfigs.get(machineName).getAttributes());
+        machines.put(machine.getName(), machine);
+        sendStartingEvent(machine.getName());
+      }
+    }
   }
 
   private List<Ingress> createAndWaitReady(Collection<Ingress> ingresses)
@@ -202,23 +255,6 @@ public class KubernetesInternalRuntime<
     }
 
     return readyIngresses;
-  }
-
-  @Override
-  public Map<String, ? extends Machine> getInternalMachines() {
-    return ImmutableMap.copyOf(machines);
-  }
-
-  @Override
-  protected void internalStop(Map<String, String> stopOptions) throws InfrastructureException {
-    // Cancels workspace servers probes if any
-    probeScheduler.cancel(getContext().getIdentity().getWorkspaceId());
-    project.cleanUp();
-  }
-
-  @Override
-  public Map<String, String> getProperties() {
-    return emptyMap();
   }
 
   /**
@@ -258,39 +294,6 @@ public class KubernetesInternalRuntime<
         probesFactory.getProbes(
             getContext().getIdentity().getWorkspaceId(), machine.getName(), machine.getServers()),
         new ServerLivenessHandler());
-  }
-
-  /**
-   * Creates Kubernetes pods and resolves machine servers based on ingresses and services.
-   *
-   * @param services created Kubernetes services
-   * @param ingresses created Kubernetes ingresses
-   * @throws InfrastructureException when any error occurs while creating Kubernetes pods
-   */
-  @VisibleForTesting
-  void createPods(List<Service> services, List<Ingress> ingresses) throws InfrastructureException {
-    final KubernetesServerResolver kubernetesServerResolver =
-        new KubernetesServerResolver(services, ingresses);
-    final KubernetesEnvironment environment = getContext().getEnvironment();
-    final Map<String, InternalMachineConfig> machineConfigs = environment.getMachines();
-    for (Pod toCreate : environment.getPods().values()) {
-      final Pod createdPod = project.pods().create(toCreate);
-      final ObjectMeta podMetadata = createdPod.getMetadata();
-      for (Container container : createdPod.getSpec().getContainers()) {
-        String machineName = Names.machineName(toCreate, container);
-        KubernetesMachine machine =
-            new KubernetesMachine(
-                machineName,
-                podMetadata.getName(),
-                container.getName(),
-                kubernetesServerResolver.resolve(machineName),
-                project,
-                MachineStatus.STARTING,
-                machineConfigs.get(machineName).getAttributes());
-        machines.put(machine.getName(), machine);
-        sendStartingEvent(machine.getName());
-      }
-    }
   }
 
   private class ServerReadinessHandler implements Consumer<String> {

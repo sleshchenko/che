@@ -10,7 +10,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -89,6 +88,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPod
 import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesServices;
 import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEvent;
 import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumesStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.server.KubernetesServerResolver;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -137,6 +137,7 @@ public class KubernetesInternalRuntimeTest {
   @Mock private WorkspaceProbesFactory workspaceProbesFactory;
   @Mock private ProbeScheduler probesScheduler;
   @Mock private WorkspaceProbes workspaceProbes;
+  @Mock private KubernetesServerResolver kubernetesServerResolver;
 
   @Captor private ArgumentCaptor<MachineStatusEvent> machineStatusEventCaptor;
 
@@ -317,8 +318,7 @@ public class KubernetesInternalRuntimeTest {
     final ContainerEvent out2 = mockContainerEvent("image pulled", "07/07/2007 19:08:53");
     final ArgumentCaptor<MachineLogEvent> captor = ArgumentCaptor.forClass(MachineLogEvent.class);
 
-    internalRuntime.createPods(
-        newArrayList(allServices.values()), newArrayList(allIngresses.values()));
+    internalRuntime.doStartMachine(kubernetesServerResolver);
     logsPublisher.handle(out1);
     logsPublisher.handle(out2);
 

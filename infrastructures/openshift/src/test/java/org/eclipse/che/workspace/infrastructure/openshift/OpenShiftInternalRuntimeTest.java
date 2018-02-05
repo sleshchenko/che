@@ -177,7 +177,7 @@ public class OpenShiftInternalRuntimeTest {
         ImmutableMap.of(POD_NAME, mockPod(ImmutableList.of(container1, container2)));
     when(osEnv.getPods()).thenReturn(allPods);
 
-    internalRuntime.createMachines();
+    internalRuntime.startMachines();
 
     verify(pods).create(any());
     verify(routes).create(any());
