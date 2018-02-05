@@ -115,7 +115,7 @@ public class KubernetesNamespaceTest {
     // then
     assertNotNull(error);
     String message = error.getMessage();
-    assertEquals(message, "Error(s) occurs while cleaning namespace up. err1. err2.");
+    assertEquals(message, "Error(s) occurs while cleaning up the namespace. err1. err2.");
     verify(ingresses).delete();
   }
 

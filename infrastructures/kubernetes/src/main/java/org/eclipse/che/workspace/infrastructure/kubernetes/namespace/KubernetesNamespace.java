@@ -107,7 +107,7 @@ public class KubernetesNamespace {
         operation.perform();
       } catch (InternalInfrastructureException e) {
         LOG.warn(
-            "Internal infra error occurred while cleaning namespace up for workspace with id "
+            "Internal infra error occurred while cleaning up the namespace for workspace with id "
                 + workspaceId,
             e);
         errors.append(" ").append(e.getMessage());
@@ -118,7 +118,7 @@ public class KubernetesNamespace {
 
     if (errors.length() > 0) {
       throw new InfrastructureException(
-          "Error(s) occurs while cleaning namespace up." + errors.toString());
+          "Error(s) occurs while cleaning up the namespace." + errors.toString());
     }
   }
 

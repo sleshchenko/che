@@ -120,7 +120,7 @@ public class OpenShiftProjectTest {
     // then
     assertNotNull(error);
     String message = error.getMessage();
-    assertEquals(message, "Error(s) occurs while cleaning project up. err1. err2.");
+    assertEquals(message, "Error(s) occurs while cleaning up the namespace. err1. err2.");
     verify(routes).delete();
   }
 
