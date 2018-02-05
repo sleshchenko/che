@@ -8,12 +8,12 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolume;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolumeMount;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
@@ -35,8 +35,8 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.lang.concurrent.ThreadLocalPropagateContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPods;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPods;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

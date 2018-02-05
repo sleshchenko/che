@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 public class WorkspacePVCCleanerTest {
 
   private static final String WORKSPACE_ID = "workspace132";
-  private static final String PROJECT_NAME = "che";
+  private static final String NAMESPACE_NAME = "che";
 
   @Mock private WorkspaceVolumesStrategy pvcStrategy;
   @Mock private EventService eventService;
@@ -48,12 +48,12 @@ public class WorkspacePVCCleanerTest {
 
   @BeforeMethod
   public void setUp() {
-    workspacePVCCleaner = new WorkspacePVCCleaner(true, PROJECT_NAME, pvcStrategy);
+    workspacePVCCleaner = new WorkspacePVCCleaner(true, NAMESPACE_NAME, pvcStrategy);
   }
 
   @Test
   public void testDoNotSubscribesCleanerWhenPVCDisabled() {
-    workspacePVCCleaner = spy(new WorkspacePVCCleaner(false, PROJECT_NAME, pvcStrategy));
+    workspacePVCCleaner = spy(new WorkspacePVCCleaner(false, NAMESPACE_NAME, pvcStrategy));
 
     workspacePVCCleaner.subscribe(eventService);
 
@@ -61,7 +61,7 @@ public class WorkspacePVCCleanerTest {
   }
 
   @Test
-  public void testSubscribesDeleteKubernetesProjectOnWorkspaceRemove() throws Exception {
+  public void testSubscribesDeleteKubernetesOnWorkspaceRemove() throws Exception {
     workspacePVCCleaner.subscribe(eventService);
 
     verify(eventService).subscribe(any(EventSubscriber.class));

@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Listener for removing Kubernetes project on {@code WorkspaceRemovedEvent}.
+ * Listener for removing Kubernetes namespace on {@code WorkspaceRemovedEvent}.
  *
  * @author Sergii Leshchenko
  */
@@ -35,19 +35,19 @@ public class RemoveNamespaceOnWorkspaceRemove implements EventSubscriber<Workspa
   private static final Logger LOG = LoggerFactory.getLogger(RemoveNamespaceOnWorkspaceRemove.class);
 
   private final KubernetesClientFactory clientFactory;
-  private final String projectName;
+  private final String namespaceName;
 
   @Inject
   public RemoveNamespaceOnWorkspaceRemove(
-      @Nullable @Named("che.infra.kubernetes.namespace") String projectName,
+      @Nullable @Named("che.infra.kubernetes.namespace") String namespaceName,
       KubernetesClientFactory clientFactory) {
-    this.projectName = projectName;
+    this.namespaceName = namespaceName;
     this.clientFactory = clientFactory;
   }
 
   @Inject
   public void subscribe(EventService eventService) {
-    if (isNullOrEmpty(projectName)) {
+    if (isNullOrEmpty(namespaceName)) {
       eventService.subscribe(this);
     }
   }
@@ -58,14 +58,14 @@ public class RemoveNamespaceOnWorkspaceRemove implements EventSubscriber<Workspa
       doRemoveNamespace(event.getWorkspace().getId());
     } catch (InfrastructureException e) {
       LOG.warn(
-          "Fail to remove Kubernetes project for workspace with id {}. Cause: {}",
+          "Fail to remove Kubernetes namespace for workspace with id {}. Cause: {}",
           event.getWorkspace().getId(),
           e.getMessage());
     }
   }
 
   @VisibleForTesting
-  void doRemoveNamespace(String projectName) throws InfrastructureException {
-    clientFactory.create().namespaces().withName(projectName).delete();
+  void doRemoveNamespace(String namespaceName) throws InfrastructureException {
+    clientFactory.create().namespaces().withName(namespaceName).delete();
   }
 }

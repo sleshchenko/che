@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -92,7 +92,7 @@ public class KubernetesPersistentVolumeClaims {
   }
 
   /**
-   * Creates all PVCs which are not present in current Kubernetes project.
+   * Creates all PVCs which are not present in current Kubernetes namespace.
    *
    * @param toCreate collection of PVCs to create
    * @throws InfrastructureException when any error occurs while creation

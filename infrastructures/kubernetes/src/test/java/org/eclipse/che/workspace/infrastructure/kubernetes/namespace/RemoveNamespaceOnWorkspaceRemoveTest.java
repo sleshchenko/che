@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -38,13 +38,13 @@ public class RemoveNamespaceOnWorkspaceRemoveTest {
 
   @Mock private Workspace workspace;
 
-  private RemoveNamespaceOnWorkspaceRemove removeProjectOnWorkspaceRemove;
+  private RemoveNamespaceOnWorkspaceRemove removeNamespaceOnWorkspaceRemove;
 
   @BeforeMethod
   public void setUp() throws Exception {
-    removeProjectOnWorkspaceRemove = spy(new RemoveNamespaceOnWorkspaceRemove(null, null));
+    removeNamespaceOnWorkspaceRemove = spy(new RemoveNamespaceOnWorkspaceRemove(null, null));
 
-    doNothing().when(removeProjectOnWorkspaceRemove).doRemoveNamespace(anyString());
+    doNothing().when(removeNamespaceOnWorkspaceRemove).doRemoveNamespace(anyString());
 
     when(workspace.getId()).thenReturn(WORKSPACE_ID);
   }
@@ -53,15 +53,15 @@ public class RemoveNamespaceOnWorkspaceRemoveTest {
   public void shouldSubscribeListenerToEventService() {
     EventService eventService = mock(EventService.class);
 
-    removeProjectOnWorkspaceRemove.subscribe(eventService);
+    removeNamespaceOnWorkspaceRemove.subscribe(eventService);
 
-    verify(eventService).subscribe(removeProjectOnWorkspaceRemove);
+    verify(eventService).subscribe(removeNamespaceOnWorkspaceRemove);
   }
 
   @Test
-  public void shouldRemoveProjectOnWorkspaceRemovedEvent() throws Exception {
-    removeProjectOnWorkspaceRemove.onEvent(new WorkspaceRemovedEvent(workspace));
+  public void shouldRemoveNamespaceOnWorkspaceRemovedEvent() throws Exception {
+    removeNamespaceOnWorkspaceRemove.onEvent(new WorkspaceRemovedEvent(workspace));
 
-    verify(removeProjectOnWorkspaceRemove).doRemoveNamespace(WORKSPACE_ID);
+    verify(removeNamespaceOnWorkspaceRemove).doRemoveNamespace(WORKSPACE_ID);
   }
 }

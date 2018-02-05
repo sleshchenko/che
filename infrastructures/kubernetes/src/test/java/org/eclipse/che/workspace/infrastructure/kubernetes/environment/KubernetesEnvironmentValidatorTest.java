@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  */
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesEnvironmentValidatorTest {
-  @Mock private KubernetesEnvironment openShiftEnvironment;
+  @Mock private KubernetesEnvironment kubernetesEnvironment;
 
   private KubernetesEnvironmentValidator environmentValidator;
 
@@ -51,10 +51,10 @@ public class KubernetesEnvironmentValidatorTest {
   )
   public void shouldThrowExceptionWhenEnvDoesNotHaveAnyPods() throws Exception {
     // given
-    when(openShiftEnvironment.getPods()).thenReturn(emptyMap());
+    when(kubernetesEnvironment.getPods()).thenReturn(emptyMap());
 
     // when
-    environmentValidator.validate(openShiftEnvironment);
+    environmentValidator.validate(kubernetesEnvironment);
   }
 
   @Test(
@@ -66,12 +66,12 @@ public class KubernetesEnvironmentValidatorTest {
       throws Exception {
     // given
     Pod pod = createPod("pod1", "main");
-    when(openShiftEnvironment.getPods()).thenReturn(ImmutableMap.of("pod1", pod));
-    when(openShiftEnvironment.getMachines())
+    when(kubernetesEnvironment.getPods()).thenReturn(ImmutableMap.of("pod1", pod));
+    when(kubernetesEnvironment.getMachines())
         .thenReturn(ImmutableMap.of("pod1/db", mock(InternalMachineConfig.class)));
 
     // when
-    environmentValidator.validate(openShiftEnvironment);
+    environmentValidator.validate(kubernetesEnvironment);
   }
 
   private Pod createPod(String name, String... containers) {

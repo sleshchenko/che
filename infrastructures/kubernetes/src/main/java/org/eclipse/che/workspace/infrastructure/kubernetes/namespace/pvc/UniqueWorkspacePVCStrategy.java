@@ -8,14 +8,14 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_VOLUME_NAME_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newPVC;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolume;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolumeMount;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.putLabel;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner.LOGS_VOLUME_NAME;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -36,17 +36,18 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPersistentVolumeClaims;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
 
 /**
  * Provides a unique PVC for each workspace.
  *
  * <p>Names for PVCs are evaluated as: '{configured_prefix}' + '-' +'{generated_8_chars}' to avoid
- * naming collisions inside of one OpenShift project.
+ * naming collisions inside of one Kubernetes namespace.
  *
  * <p>Note that for this strategy count of simultaneously running workspaces and workspaces with
- * backed up data is always the same and equal to the count of available PVCs in OpenShift project.
+ * backed up data is always the same and equal to the count of available PVCs in Kubernetes
+ * namespace.
  *
  * <p>The usage of PVCs for this strategy is next: one PVC per volume, but for volumes that are
  * provided by Che there a small exception: <br>
@@ -64,7 +65,7 @@ public class UniqueWorkspacePVCStrategy implements WorkspaceVolumesStrategy {
   public static final String UNIQUE_STRATEGY = "unique";
 
   private final String pvcNamePrefix;
-  private final String projectName;
+  private final String namespaceName;
   private final String pvcQuantity;
   private final String pvcAccessMode;
   private final KubernetesClientFactory clientFactory;
@@ -72,7 +73,7 @@ public class UniqueWorkspacePVCStrategy implements WorkspaceVolumesStrategy {
 
   @Inject
   public UniqueWorkspacePVCStrategy(
-      @Nullable @Named("che.infra.kubernetes.namespace") String projectName,
+      @Nullable @Named("che.infra.kubernetes.namespace") String namespaceName,
       @Named("che.infra.kubernetes.pvc.name") String pvcNamePrefix,
       @Named("che.infra.kubernetes.pvc.quantity") String pvcQuantity,
       @Named("che.infra.kubernetes.pvc.access_mode") String pvcAccessMode,
@@ -80,7 +81,7 @@ public class UniqueWorkspacePVCStrategy implements WorkspaceVolumesStrategy {
       KubernetesClientFactory clientFactory) {
     this.pvcNamePrefix = pvcNamePrefix;
     this.pvcQuantity = pvcQuantity;
-    this.projectName = projectName;
+    this.namespaceName = namespaceName;
     this.pvcAccessMode = pvcAccessMode;
     this.clientFactory = clientFactory;
     this.factory = factory;
@@ -175,7 +176,7 @@ public class UniqueWorkspacePVCStrategy implements WorkspaceVolumesStrategy {
     clientFactory
         .create()
         .persistentVolumeClaims()
-        .inNamespace(projectName)
+        .inNamespace(namespaceName)
         .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
         .delete();
   }

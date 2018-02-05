@@ -8,14 +8,14 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_VOLUME_NAME_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.CommonPVCStrategyTest.mockName;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategyTest.mockName;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -48,9 +48,9 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPersistentVolumeClaims;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -66,7 +66,7 @@ import org.testng.annotations.Test;
 public class UniqueWorkspacePVCStrategyTest {
 
   private static final String WORKSPACE_ID = "workspace123";
-  private static final String PROJECT_NAME = "che";
+  private static final String NAMESPACE_NAME = "che";
   private static final String PVC_NAME_PREFIX = "che-claim";
   private static final String POD_NAME = "main";
   private static final String POD_NAME_2 = "second";
@@ -104,7 +104,7 @@ public class UniqueWorkspacePVCStrategyTest {
   public void setup() throws Exception {
     strategy =
         new UniqueWorkspacePVCStrategy(
-            PROJECT_NAME, PVC_NAME_PREFIX, PVC_QUANTITY, PVC_ACCESS_MODE, factory, clientFactory);
+            NAMESPACE_NAME, PVC_NAME_PREFIX, PVC_QUANTITY, PVC_ACCESS_MODE, factory, clientFactory);
     when(clientFactory.create()).thenReturn(client);
 
     Map<String, InternalMachineConfig> machines = new HashMap<>();
@@ -241,7 +241,7 @@ public class UniqueWorkspacePVCStrategyTest {
     final NonNamespaceOperation namespace = mock(NonNamespaceOperation.class);
     final FilterWatchListDeletable filterList = mock(FilterWatchListDeletable.class);
     doReturn(mixedOperation).when(client).persistentVolumeClaims();
-    doReturn(namespace).when(mixedOperation).inNamespace(PROJECT_NAME);
+    doReturn(namespace).when(mixedOperation).inNamespace(NAMESPACE_NAME);
     doReturn(filterList).when(namespace).withLabel(CHE_WORKSPACE_ID_LABEL, WORKSPACE_ID);
     when(filterList.delete()).thenReturn(true);
 
@@ -256,7 +256,7 @@ public class UniqueWorkspacePVCStrategyTest {
     final NonNamespaceOperation namespace = mock(NonNamespaceOperation.class);
     final FilterWatchListDeletable filterList = mock(FilterWatchListDeletable.class);
     doReturn(mixedOperation).when(client).persistentVolumeClaims();
-    doReturn(namespace).when(mixedOperation).inNamespace(PROJECT_NAME);
+    doReturn(namespace).when(mixedOperation).inNamespace(NAMESPACE_NAME);
     doReturn(filterList).when(namespace).withLabel(CHE_WORKSPACE_ID_LABEL, WORKSPACE_ID);
     when(filterList.delete()).thenReturn(false);
 

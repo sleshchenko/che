@@ -82,12 +82,12 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInternalRun
 import org.eclipse.che.workspace.infrastructure.kubernetes.bootstrapper.KubernetesBootstrapper;
 import org.eclipse.che.workspace.infrastructure.kubernetes.bootstrapper.KubernetesBootstrapperFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesIngresses;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPods;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesServices;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEvent;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumesStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesIngresses;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPods;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesServices;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.ContainerEvent;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.KubernetesServerResolver;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -305,7 +305,7 @@ public class KubernetesInternalRuntimeTest {
   }
 
   @Test(expectedExceptions = InfrastructureException.class)
-  public void throwsInfrastructureExceptionWhenKubernetesProjectCleanupFailed() throws Exception {
+  public void throwsInfrastructureExceptionWhenKubernetesNamespaceCleanupFailed() throws Exception {
     doThrow(InfrastructureException.class).when(namespace).cleanUp();
 
     internalRuntime.internalStop(emptyMap());

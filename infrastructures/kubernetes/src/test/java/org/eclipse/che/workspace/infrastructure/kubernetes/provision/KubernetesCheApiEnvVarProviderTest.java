@@ -28,17 +28,17 @@ public class KubernetesCheApiEnvVarProviderTest {
 
   private static final String CHE_SERVER_ENDPOINT = "localhost:8080";
 
-  private KubernetesCheApiEnvVarProvider openShiftCheApiEnvVarProvider;
+  private KubernetesCheApiEnvVarProvider kubernetesCheApiEnvVarProvider;
 
   @BeforeMethod
   public void setUp() throws Exception {
-    openShiftCheApiEnvVarProvider = new KubernetesCheApiEnvVarProvider(CHE_SERVER_ENDPOINT);
+    kubernetesCheApiEnvVarProvider = new KubernetesCheApiEnvVarProvider(CHE_SERVER_ENDPOINT);
   }
 
   @Test
   public void shouldReturnCheApiEnv() throws Exception {
     // when
-    Pair<String, String> cheApiEnv = openShiftCheApiEnvVarProvider.get(null);
+    Pair<String, String> cheApiEnv = kubernetesCheApiEnvVarProvider.get(null);
 
     // then
     assertEquals(cheApiEnv.first, KubernetesCheApiEnvVarProvider.API_ENDPOINT_URL_VARIABLE);

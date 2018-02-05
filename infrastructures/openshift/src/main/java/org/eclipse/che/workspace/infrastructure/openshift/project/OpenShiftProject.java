@@ -17,11 +17,11 @@ import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesIngresses;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPersistentVolumeClaims;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPods;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesServices;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesIngresses;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPods;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesServices;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 
 /**

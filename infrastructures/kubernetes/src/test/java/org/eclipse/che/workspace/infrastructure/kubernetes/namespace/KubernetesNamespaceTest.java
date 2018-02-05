@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesNamespaceTest {
 
-  public static final String NAMESPACE = "testProject";
+  public static final String NAMESPACE = "testNamespace";
   public static final String WORKSPACE_ID = "workspace123";
 
   @Mock private KubernetesPods pods;
@@ -50,22 +50,22 @@ public class KubernetesNamespaceTest {
   @Mock private KubernetesIngresses ingresses;
   @Mock private KubernetesPersistentVolumeClaims pvcs;
   @Mock private KubernetesClientFactory clientFactory;
-  @Mock private KubernetesClient openShiftClient;
+  @Mock private KubernetesClient kubernetesClient;
   @Mock private NonNamespaceOperation namespaceOperation;
 
   private KubernetesNamespace k8sNamespace;
 
   @BeforeMethod
   public void setUp() throws Exception {
-    when(clientFactory.create()).thenReturn(openShiftClient);
+    when(clientFactory.create()).thenReturn(kubernetesClient);
 
-    doReturn(namespaceOperation).when(openShiftClient).namespaces();
+    doReturn(namespaceOperation).when(kubernetesClient).namespaces();
 
     k8sNamespace = new KubernetesNamespace(WORKSPACE_ID, pods, services, pvcs, ingresses);
   }
 
   @Test
-  public void testKubernetesProjectCreationWhenProjectExists() throws Exception {
+  public void testKubernetesNamespaceCreationWhenNamespaceExists() throws Exception {
     // given
     prepareNamespace(NAMESPACE);
 
@@ -76,7 +76,7 @@ public class KubernetesNamespaceTest {
   @Test
   public void testKubernetesNamespaceCreationWhenNamespaceDoesNotExist() throws Exception {
     // given
-    MetadataNested namespaceMeta = prepareProjectRequest();
+    MetadataNested namespaceMeta = prepareCreateNamespaceRequest();
 
     Resource resource = prepareNamespaceResource(NAMESPACE);
     doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
@@ -89,7 +89,7 @@ public class KubernetesNamespaceTest {
   }
 
   @Test
-  public void testKubernetesProjectCleaningUp() throws Exception {
+  public void testKubernetesNamespaceCleaningUp() throws Exception {
     // when
     k8sNamespace.cleanUp();
 
@@ -99,7 +99,7 @@ public class KubernetesNamespaceTest {
   }
 
   @Test
-  public void testKubernetesProjectCleaningUpIfExceptionsOccurs() throws Exception {
+  public void testKubernetesNamespaceCleaningUpIfExceptionsOccurs() throws Exception {
     doThrow(new InfrastructureException("err1.")).when(services).delete();
     doThrow(new InfrastructureException("err2.")).when(pods).delete();
 
@@ -115,11 +115,11 @@ public class KubernetesNamespaceTest {
     // then
     assertNotNull(error);
     String message = error.getMessage();
-    assertEquals(message, "Error(s) occurs while cleaning project up. err1. err2.");
+    assertEquals(message, "Error(s) occurs while cleaning namespace up. err1. err2.");
     verify(ingresses).delete();
   }
 
-  private MetadataNested prepareProjectRequest() {
+  private MetadataNested prepareCreateNamespaceRequest() {
     DoneableNamespace namespace = mock(DoneableNamespace.class);
     MetadataNested metadataNested = mock(MetadataNested.class);
 
@@ -131,15 +131,15 @@ public class KubernetesNamespaceTest {
   }
 
   private Resource prepareNamespaceResource(String namespaceName) {
-    Resource projectResource = mock(Resource.class);
-    doReturn(projectResource).when(namespaceOperation).withName(namespaceName);
-    openShiftClient.namespaces().withName(namespaceName).get();
-    return projectResource;
+    Resource namespaceResource = mock(Resource.class);
+    doReturn(namespaceResource).when(namespaceOperation).withName(namespaceName);
+    kubernetesClient.namespaces().withName(namespaceName).get();
+    return namespaceResource;
   }
 
-  private void prepareNamespace(String namespace) {
-    Namespace project = mock(Namespace.class);
-    Resource projectResource = prepareNamespaceResource(namespace);
-    doReturn(project).when(projectResource).get();
+  private void prepareNamespace(String namespaceName) {
+    Namespace namespace = mock(Namespace.class);
+    Resource namespaceResource = prepareNamespaceResource(namespaceName);
+    doReturn(namespace).when(namespaceResource).get();
   }
 }

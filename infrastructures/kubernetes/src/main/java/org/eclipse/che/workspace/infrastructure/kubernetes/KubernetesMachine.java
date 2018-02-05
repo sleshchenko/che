@@ -19,7 +19,7 @@ import org.eclipse.che.api.core.model.workspace.runtime.Server;
 import org.eclipse.che.api.core.model.workspace.runtime.ServerStatus;
 import org.eclipse.che.api.workspace.server.model.impl.ServerImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 
 /** @author Sergii Leshchenko */
 public class KubernetesMachine implements Machine {
@@ -32,7 +32,7 @@ public class KubernetesMachine implements Machine {
   private final String containerName;
   private final Map<String, String> attributes;
   private final Map<String, ServerImpl> ref2Server;
-  private final KubernetesNamespace project;
+  private final KubernetesNamespace namespace;
 
   private MachineStatus status;
 
@@ -41,7 +41,7 @@ public class KubernetesMachine implements Machine {
       String podName,
       String containerName,
       Map<String, ServerImpl> ref2Server,
-      KubernetesNamespace project,
+      KubernetesNamespace namespace,
       MachineStatus status,
       Map<String, String> attributes) {
     this.machineName = machineName;
@@ -57,7 +57,7 @@ public class KubernetesMachine implements Machine {
     } else {
       this.attributes = Collections.emptyMap();
     }
-    this.project = project;
+    this.namespace = namespace;
     this.status = status;
   }
 
@@ -102,11 +102,11 @@ public class KubernetesMachine implements Machine {
   }
 
   public void exec(String... command) throws InfrastructureException {
-    project.pods().exec(podName, containerName, EXEC_TIMEOUT_MIN, command);
+    namespace.pods().exec(podName, containerName, EXEC_TIMEOUT_MIN, command);
   }
 
   public void waitRunning(int timeoutMin) throws InfrastructureException {
-    project
+    namespace
         .pods()
         .wait(
             podName,

@@ -10,8 +10,8 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.CommonPVCStrategy.COMMON_STRATEGY;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.UniqueWorkspacePVCStrategy.UNIQUE_STRATEGY;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy.COMMON_STRATEGY;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.UniqueWorkspacePVCStrategy.UNIQUE_STRATEGY;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -26,12 +26,12 @@ import org.eclipse.che.workspace.infrastructure.docker.environment.dockerimage.D
 import org.eclipse.che.workspace.infrastructure.kubernetes.bootstrapper.KubernetesBootstrapperFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.RemoveNamespaceOnWorkspaceRemove;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.CommonPVCStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.UniqueWorkspacePVCStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspacePVCCleaner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumeStrategyProvider;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumesStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.UniqueWorkspacePVCStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspacePVCCleaner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumeStrategyProvider;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiEnvVarProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.env.LogsRootEnvVariableProvider;
 

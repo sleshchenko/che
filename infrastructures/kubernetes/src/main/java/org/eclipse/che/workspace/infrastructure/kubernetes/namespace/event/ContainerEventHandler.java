@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.event;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event;
 
 /**
  * Defines the handling mechanism for Kubernetes container events.

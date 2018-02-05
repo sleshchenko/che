@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
  * Cleans the workspace related Kubernetes resources after {@code WorkspaceRemovedEvent}.
  *
  * <p>Note that depending on a configuration different types of cleaners may be chosen. In case of
- * configuration when new Kubernetes project created for each workspace, the whole project will be
- * removed, after workspace removal.
+ * configuration when new Kubernetes namespace created for each workspace, the whole namespace
+ * will be removed, after workspace removal.
  *
  * @author Anton Korneta
  */
@@ -38,22 +38,22 @@ public class WorkspacePVCCleaner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkspacePVCCleaner.class);
 
   private final boolean pvcEnabled;
-  private final String projectName;
+  private final String namespaceName;
   private final WorkspaceVolumesStrategy strategy;
 
   @Inject
   public WorkspacePVCCleaner(
       @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
-      @Nullable @Named("che.infra.kubernetes.namespace") String projectName,
+      @Nullable @Named("che.infra.kubernetes.namespace") String namespaceName,
       WorkspaceVolumesStrategy pvcStrategy) {
     this.pvcEnabled = pvcEnabled;
-    this.projectName = projectName;
+    this.namespaceName = namespaceName;
     this.strategy = pvcStrategy;
   }
 
   @Inject
   public void subscribe(EventService eventService) {
-    if (pvcEnabled && !isNullOrEmpty(projectName))
+    if (pvcEnabled && !isNullOrEmpty(namespaceName))
       eventService.subscribe(
           new EventSubscriber<WorkspaceRemovedEvent>() {
             @Override

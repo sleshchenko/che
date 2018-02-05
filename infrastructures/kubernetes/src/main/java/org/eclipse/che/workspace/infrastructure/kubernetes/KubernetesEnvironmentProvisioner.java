@@ -16,7 +16,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumesStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.InstallerServersPortProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
@@ -79,14 +79,14 @@ public class KubernetesEnvironmentProvisioner {
       logsVolumeMachineProvisioner.provision(k8sEnv, identity);
     }
 
-    // 2 stage - converting Che model env to OpenShift env
+    // 2 stage - converting Che model env to Kubernetes env
     serversConverter.provision(k8sEnv, identity);
     envVarsConverter.provision(k8sEnv, identity);
     if (pvcEnabled) {
       volumesStrategy.provision(k8sEnv, identity);
     }
 
-    // 3 stage - add OpenShift env items
+    // 3 stage - add Kubernetes env items
     restartPolicyRewriter.provision(k8sEnv, identity);
     uniqueNamesProvisioner.provision(k8sEnv, identity);
     ramLimitProvisioner.provision(k8sEnv, identity);

@@ -8,13 +8,13 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newPVC;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolume;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.newVolumeMount;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner.LOGS_VOLUME_NAME;
 
 import com.google.inject.Inject;
@@ -34,12 +34,12 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPersistentVolumeClaims;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
 
 /**
- * Provides common PVC for each workspace in one Kubernetes project.
+ * Provides common PVC for each workspace in one Kubernetes namespace.
  *
  * <p>This strategy uses subpaths for resolving backed up data paths collisions. <br>
  * Subpaths evaluated as following: '{workspaceId}/{workspace data folder}'. Workspace data folder
@@ -117,8 +117,8 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
       throws InfrastructureException {
     final Collection<PersistentVolumeClaim> claims = k8sEnv.getPersistentVolumeClaims().values();
     if (!claims.isEmpty()) {
-      final KubernetesNamespace project = factory.create(workspaceId);
-      final KubernetesPersistentVolumeClaims pvcs = project.persistentVolumeClaims();
+      final KubernetesNamespace namespace = factory.create(workspaceId);
+      final KubernetesPersistentVolumeClaims pvcs = namespace.persistentVolumeClaims();
       final Set<String> existing =
           pvcs.get().stream().map(p -> p.getMetadata().getName()).collect(toSet());
       for (PersistentVolumeClaim pvc : claims) {

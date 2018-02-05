@@ -55,11 +55,11 @@ import org.eclipse.che.api.workspace.shared.dto.event.ServerStatusEvent;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.bootstrapper.KubernetesBootstrapperFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEvent;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEventHandler;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.PodActionHandler;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.WorkspaceVolumesStrategy;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.ContainerEvent;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.ContainerEventHandler;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.PodActionHandler;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.KubernetesServerResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,7 @@ public class KubernetesInternalRuntime<
   private final int machineStartTimeoutMin;
   private final ProbeScheduler probeScheduler;
   private final WorkspaceProbesFactory probesFactory;
-  private final KubernetesNamespace project;
+  private final KubernetesNamespace namespace;
   private final WorkspaceVolumesStrategy volumesStrategy;
   protected final Map<String, KubernetesMachine> machines;
 
@@ -99,7 +99,7 @@ public class KubernetesInternalRuntime<
       ProbeScheduler probeScheduler,
       WorkspaceProbesFactory probesFactory,
       @Assisted T context,
-      @Assisted KubernetesNamespace project,
+      @Assisted KubernetesNamespace namespace,
       @Assisted List<Warning> warnings) {
     super(context, urlRewriter, warnings, false);
     this.eventService = eventService;
@@ -109,7 +109,7 @@ public class KubernetesInternalRuntime<
     this.machineStartTimeoutMin = machineStartTimeoutMin;
     this.probeScheduler = probeScheduler;
     this.probesFactory = probesFactory;
-    this.project = project;
+    this.namespace = namespace;
     this.machines = new ConcurrentHashMap<>();
   }
 
@@ -145,7 +145,7 @@ public class KubernetesInternalRuntime<
       // Cancels workspace servers probes if any
       probeScheduler.cancel(workspaceId);
       try {
-        project.cleanUp();
+        namespace.cleanUp();
       } catch (InfrastructureException ignored) {
       }
       if (interrupted) {
@@ -170,7 +170,7 @@ public class KubernetesInternalRuntime<
   protected void internalStop(Map<String, String> stopOptions) throws InfrastructureException {
     // Cancels workspace servers probes if any
     probeScheduler.cancel(getContext().getIdentity().getWorkspaceId());
-    project.cleanUp();
+    namespace.cleanUp();
   }
 
   @Override
@@ -187,7 +187,7 @@ public class KubernetesInternalRuntime<
     KubernetesEnvironment k8sEnv = getContext().getEnvironment();
     List<Service> createdServices = new ArrayList<>();
     for (Service service : k8sEnv.getServices().values()) {
-      createdServices.add(project.services().create(service));
+      createdServices.add(namespace.services().create(service));
     }
 
     // needed for resolution later on, even though nroutes are actually created by ingress
@@ -195,8 +195,8 @@ public class KubernetesInternalRuntime<
     List<Ingress> readyIngresses = createAndWaitReady(k8sEnv.getIngresses().values());
 
     // TODO https://github.com/eclipse/che/issues/7653
-    // project.pods().watch(new AbnormalStopHandler());
-    // project.pods().watchContainers(new MachineLogsPublisher());
+    // namespace.pods().watch(new AbnormalStopHandler());
+    // namespace.pods().watchContainers(new MachineLogsPublisher());
 
     final KubernetesServerResolver serverResolver =
         new KubernetesServerResolver(createdServices, readyIngresses);
@@ -215,7 +215,7 @@ public class KubernetesInternalRuntime<
     final KubernetesEnvironment environment = getContext().getEnvironment();
     final Map<String, InternalMachineConfig> machineConfigs = environment.getMachines();
     for (Pod toCreate : environment.getPods().values()) {
-      final Pod createdPod = project.pods().create(toCreate);
+      final Pod createdPod = namespace.pods().create(toCreate);
       final ObjectMeta podMetadata = createdPod.getMetadata();
       for (Container container : createdPod.getSpec().getContainers()) {
         String machineName = Names.machineName(toCreate, container);
@@ -225,7 +225,7 @@ public class KubernetesInternalRuntime<
                 podMetadata.getName(),
                 container.getName(),
                 serverResolver.resolve(machineName),
-                project,
+                namespace,
                 MachineStatus.STARTING,
                 machineConfigs.get(machineName).getAttributes());
         machines.put(machine.getName(), machine);
@@ -238,14 +238,14 @@ public class KubernetesInternalRuntime<
       throws InfrastructureException {
     List<Ingress> createdIngresses = new ArrayList<>();
     for (Ingress ingress : ingresses) {
-      createdIngresses.add(project.ingresses().create(ingress));
+      createdIngresses.add(namespace.ingresses().create(ingress));
     }
 
     // wait for LB ip
     List<Ingress> readyIngresses = new ArrayList<>();
     for (Ingress ingress : createdIngresses) {
       Ingress actualIngress =
-          project
+          namespace
               .ingresses()
               .wait(
                   ingress.getMetadata().getName(),

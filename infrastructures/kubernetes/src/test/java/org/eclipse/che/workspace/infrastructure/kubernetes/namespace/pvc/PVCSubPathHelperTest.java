@@ -8,13 +8,13 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.PVCSubPathHelper.JOB_MOUNT_PATH;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.PVCSubPathHelper.MKDIR_COMMAND_BASE;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.PVCSubPathHelper.POD_PHASE_FAILED;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.pvc.PVCSubPathHelper.POD_PHASE_SUCCEEDED;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.JOB_MOUNT_PATH;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.MKDIR_COMMAND_BASE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.POD_PHASE_FAILED;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.POD_PHASE_SUCCEEDED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -31,9 +31,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesPods;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPods;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -60,7 +60,7 @@ public class PVCSubPathHelperTest {
 
   @Mock private SecurityContextProvisioner securityContextProvisioner;
   @Mock private KubernetesNamespaceFactory k8sNamespaceFactory;
-  @Mock private KubernetesNamespace k8sProject;
+  @Mock private KubernetesNamespace k8sNamespace;
   @Mock private KubernetesPods osPods;
   @Mock private Pod pod;
   @Mock private PodStatus podStatus;
@@ -74,8 +74,8 @@ public class PVCSubPathHelperTest {
     pvcSubPathHelper =
         new PVCSubPathHelper(
             PVC_NAME, jobMemoryLimit, jobImage, k8sNamespaceFactory, securityContextProvisioner);
-    when(k8sNamespaceFactory.create(anyString())).thenReturn(k8sProject);
-    when(k8sProject.pods()).thenReturn(osPods);
+    when(k8sNamespaceFactory.create(anyString())).thenReturn(k8sNamespace);
+    when(k8sNamespace.pods()).thenReturn(osPods);
     when(pod.getStatus()).thenReturn(podStatus);
     when(osPods.create(any(Pod.class))).thenReturn(pod);
     when(osPods.wait(anyString(), anyInt(), any())).thenReturn(pod);
@@ -130,12 +130,12 @@ public class PVCSubPathHelperTest {
   @Test
   public void testLogErrorWhenKubernetesProjectCreationFailed() throws Exception {
     when(k8sNamespaceFactory.create(WORKSPACE_ID))
-        .thenThrow(new InfrastructureException("Kubernetes project creation failed"));
+        .thenThrow(new InfrastructureException("Kubernetes namespace creation failed"));
 
     pvcSubPathHelper.execute(WORKSPACE_ID, MKDIR_COMMAND_BASE, WORKSPACE_ID + PROJECTS_PATH);
 
     verify(k8sNamespaceFactory).create(WORKSPACE_ID);
-    verify(k8sProject, never()).pods();
+    verify(k8sNamespace, never()).pods();
   }
 
   @Test
@@ -146,7 +146,7 @@ public class PVCSubPathHelperTest {
     pvcSubPathHelper.execute(WORKSPACE_ID, MKDIR_COMMAND_BASE, WORKSPACE_ID + PROJECTS_PATH);
 
     verify(k8sNamespaceFactory).create(WORKSPACE_ID);
-    verify(k8sProject).pods();
+    verify(k8sNamespace).pods();
     verify(osPods).create(any());
     verify(osPods, never()).wait(anyString(), anyInt(), any());
   }

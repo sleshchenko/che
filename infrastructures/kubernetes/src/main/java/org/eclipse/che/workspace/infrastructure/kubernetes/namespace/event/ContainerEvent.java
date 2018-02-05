@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project.event;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event;
 
 import java.util.Objects;
 

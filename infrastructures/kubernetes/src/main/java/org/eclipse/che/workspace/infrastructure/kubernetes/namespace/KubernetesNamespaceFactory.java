@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -27,19 +27,19 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
 @Singleton
 public class KubernetesNamespaceFactory {
 
-  private final String projectName;
+  private final String namespaceName;
   private final KubernetesClientFactory clientFactory;
 
   @Inject
   public KubernetesNamespaceFactory(
-      @Nullable @Named("che.infra.kubernetes.namespace") String projectName,
+      @Nullable @Named("che.infra.kubernetes.namespace") String namespaceName,
       KubernetesClientFactory clientFactory) {
-    this.projectName = projectName;
+    this.namespaceName = namespaceName;
     this.clientFactory = clientFactory;
   }
 
   public KubernetesNamespace create(String workspaceId) throws InfrastructureException {
-    final String projectName = isNullOrEmpty(this.projectName) ? workspaceId : this.projectName;
-    return new KubernetesNamespace(clientFactory, projectName, workspaceId);
+    final String namespaceName = isNullOrEmpty(this.namespaceName) ? workspaceId : this.namespaceName;
+    return new KubernetesNamespace(clientFactory, namespaceName, workspaceId);
   }
 }

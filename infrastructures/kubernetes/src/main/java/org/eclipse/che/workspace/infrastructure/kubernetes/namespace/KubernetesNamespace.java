@@ -8,7 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -71,27 +71,27 @@ public class KubernetesNamespace {
     }
   }
 
-  /** Returns object for managing {@link Pod} instances inside project. */
+  /** Returns object for managing {@link Pod} instances inside namespace. */
   public KubernetesPods pods() {
     return pods;
   }
 
-  /** Returns object for managing {@link Service} instances inside project. */
+  /** Returns object for managing {@link Service} instances inside namespace. */
   public KubernetesServices services() {
     return services;
   }
 
-  /** Returns object for managing {@link PersistentVolumeClaim} instances inside project. */
+  /** Returns object for managing {@link PersistentVolumeClaim} instances inside namespace. */
   public KubernetesPersistentVolumeClaims persistentVolumeClaims() {
     return pvcs;
   }
 
-  /** Returns object for managing {@link Ingress} instances inside project. */
+  /** Returns object for managing {@link Ingress} instances inside namespace. */
   public KubernetesIngresses ingresses() {
     return ingresses;
   }
 
-  /** Removes all object except persistent volume claims inside project. */
+  /** Removes all object except persistent volume claims inside namespace. */
   public void cleanUp() throws InfrastructureException {
     doRemove(ingresses::delete, services::delete, pods::delete);
   }
@@ -107,7 +107,7 @@ public class KubernetesNamespace {
         operation.perform();
       } catch (InternalInfrastructureException e) {
         LOG.warn(
-            "Internal infra error occurred while cleaning project up for workspace with id "
+            "Internal infra error occurred while cleaning namespace up for workspace with id "
                 + workspaceId,
             e);
         errors.append(" ").append(e.getMessage());
@@ -118,25 +118,25 @@ public class KubernetesNamespace {
 
     if (errors.length() > 0) {
       throw new InfrastructureException(
-          "Error(s) occurs while cleaning project up." + errors.toString());
+          "Error(s) occurs while cleaning namespace up." + errors.toString());
     }
   }
 
-  private void create(String projectName, KubernetesClient client) throws InfrastructureException {
+  private void create(String namespaceName, KubernetesClient client) throws InfrastructureException {
     try {
-      client.namespaces().createNew().withNewMetadata().withName(projectName).endMetadata().done();
+      client.namespaces().createNew().withNewMetadata().withName(namespaceName).endMetadata().done();
     } catch (KubernetesClientException e) {
       throw new InfrastructureException(e.getMessage(), e);
     }
   }
 
-  private Namespace get(String projectName, KubernetesClient client)
+  private Namespace get(String namespaceName, KubernetesClient client)
       throws InfrastructureException {
     try {
-      return client.namespaces().withName(projectName).get();
+      return client.namespaces().withName(namespaceName).get();
     } catch (KubernetesClientException e) {
       if (e.getCode() == 403) {
-        // project is foreign or doesn't exist
+        // namespace is foreign or doesn't exist
         return null;
       } else {
         throw new InfrastructureException(e.getMessage(), e);

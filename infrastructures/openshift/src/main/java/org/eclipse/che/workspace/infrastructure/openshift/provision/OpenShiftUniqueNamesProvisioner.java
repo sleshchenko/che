@@ -10,7 +10,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.provision;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.putLabel;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.openshift.api.model.Route;

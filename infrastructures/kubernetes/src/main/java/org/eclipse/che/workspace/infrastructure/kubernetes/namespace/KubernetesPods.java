@@ -8,11 +8,11 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.project;
+package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.concurrent.CompletableFuture.allOf;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.project.KubernetesObjectUtil.putLabel;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Event;
@@ -41,9 +41,9 @@ import java.util.regex.Pattern;
 import okhttp3.Response;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEvent;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.ContainerEventHandler;
-import org.eclipse.che.workspace.infrastructure.kubernetes.project.event.PodActionHandler;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.ContainerEvent;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.ContainerEventHandler;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.PodActionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
