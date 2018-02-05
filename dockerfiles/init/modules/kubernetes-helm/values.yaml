@@ -2,15 +2,17 @@ global:
   namespace: che6-ns1
 
 ingress:
-  host: 192.168.99.102
+  host: 192.168.99.100
   useHostname: false
 
-registry:
-  host: my-registry.io
-  username: my-username
-  password: my-password
+# the following section is for secure registries. when uncommented, a pull secret will be created
+#registry:
+#  host: my-registry.io
+#  username: my-username
+#  password: my-password
 
-cheImage: my-registry.io/my-repo/che-server:latest
+cheImage: eclipse/che-server:nightly
 cheImagePullPolicy: Always
 
 tlsEnabled: false
+

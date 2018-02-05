@@ -177,9 +177,11 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: che-data-volume
-{{- if .Values.registry.username }}
+{{- if .Values.registry }}
+{{- if and .Values.registry.password .Values.registry.username }}
       imagePullSecrets:
         - name: registry-pull-secret
+{{- end }}
 {{- end }}
       serviceAccountName: che
       volumes:
