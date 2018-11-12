@@ -13,12 +13,21 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.stream.Collectors.toSet;
 
+import io.fabric8.kubernetes.api.model.DoneablePersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
@@ -30,6 +39,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastruct
  * @author Sergii Leshchenko
  */
 public class KubernetesPersistentVolumeClaims {
+
+  public static final String PVC_BOUND_PHASE = "Bound";
 
   private final String namespace;
   private final String workspaceId;
@@ -56,6 +67,24 @@ public class KubernetesPersistentVolumeClaims {
           .persistentVolumeClaims()
           .inNamespace(namespace)
           .create(pvc);
+    } catch (KubernetesClientException e) {
+      throw new KubernetesInfrastructureException(e);
+    }
+  }
+
+  /**
+   * Returns existing persistent volume claim with specified name or null if was not found.
+   *
+   * @throws InfrastructureException when any exception occurs
+   */
+  public PersistentVolumeClaim get(String name) throws InfrastructureException {
+    try {
+      return clientFactory
+          .create(workspaceId)
+          .persistentVolumeClaims()
+          .inNamespace(namespace)
+          .withName(name)
+          .get();
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
     }
@@ -135,6 +164,88 @@ public class KubernetesPersistentVolumeClaims {
           .delete();
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
+    }
+  }
+
+  /**
+   * Waits until pod state will suit for specified predicate.
+   *
+   * @param name name of pod or deployment containing pod that should be watched
+   * @param timeoutMillis waiting timeout in milliseconds
+   * @return pod that satisfies the specified predicate
+   * @throws InfrastructureException when specified timeout is reached
+   * @throws InfrastructureException when {@link Thread} is interrupted while waiting
+   * @throws InfrastructureException when any other exception occurs
+   */
+  public PersistentVolumeClaim waitBound(String name, long timeoutMillis)
+      throws InfrastructureException {
+    return wait(name, timeoutMillis, pvc -> pvc.getStatus().getPhase().equals(PVC_BOUND_PHASE));
+  }
+
+  /**
+   * Waits until pod state will suit for specified predicate.
+   *
+   * @param name name of pod or deployment containing pod that should be watched
+   * @param timeoutMillis waiting timeout in milliseconds
+   * @param predicate predicate to perform state check
+   * @return pod that satisfies the specified predicate
+   * @throws InfrastructureException when specified timeout is reached
+   * @throws InfrastructureException when {@link Thread} is interrupted while waiting
+   * @throws InfrastructureException when any other exception occurs
+   */
+  public PersistentVolumeClaim wait(
+      String name, long timeoutMillis, Predicate<PersistentVolumeClaim> predicate)
+      throws InfrastructureException {
+    CompletableFuture<PersistentVolumeClaim> future = new CompletableFuture<>();
+    Watch watch = null;
+    try {
+      Resource<PersistentVolumeClaim, DoneablePersistentVolumeClaim> pvcResource =
+          clientFactory
+              .create(workspaceId)
+              .persistentVolumeClaims()
+              .inNamespace(namespace)
+              .withName(name);
+
+      watch =
+          pvcResource.watch(
+              new Watcher<PersistentVolumeClaim>() {
+                @Override
+                public void eventReceived(Action action, PersistentVolumeClaim pvc) {
+                  if (predicate.test(pvc)) {
+                    future.complete(pvc);
+                  }
+                }
+
+                @Override
+                public void onClose(KubernetesClientException cause) {
+                  future.completeExceptionally(
+                      new InfrastructureException(
+                          "Waiting for persistent volume claim '" + name + "' was interrupted"));
+                }
+              });
+
+      PersistentVolumeClaim actualPvc = pvcResource.get();
+      if (predicate.test(actualPvc)) {
+        return actualPvc;
+      }
+      try {
+        return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+      } catch (ExecutionException e) {
+        throw new InfrastructureException(e.getCause().getMessage(), e);
+      } catch (TimeoutException e) {
+        throw new InfrastructureException(
+            "Waiting for persistent volume claim '" + name + "' reached timeout");
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new InfrastructureException(
+            "Waiting for persistent volume claim '" + name + "' was interrupted");
+      }
+    } catch (KubernetesClientException e) {
+      throw new KubernetesInfrastructureException(e);
+    } finally {
+      if (watch != null) {
+        watch.close();
+      }
     }
   }
 }
