@@ -168,11 +168,11 @@ public class KubernetesPersistentVolumeClaims {
   }
 
   /**
-   * Waits until pod state will suit for specified predicate.
+   * Waits until persistent volume claim state will bound.
    *
-   * @param name name of pod or deployment containing pod that should be watched
+   * @param name name of persistent volume claim that should be watched
    * @param timeoutMillis waiting timeout in milliseconds
-   * @return pod that satisfies the specified predicate
+   * @return persistent volume claim that satisfies the specified predicate
    * @throws InfrastructureException when specified timeout is reached
    * @throws InfrastructureException when {@link Thread} is interrupted while waiting
    * @throws InfrastructureException when any other exception occurs
@@ -183,12 +183,12 @@ public class KubernetesPersistentVolumeClaims {
   }
 
   /**
-   * Waits until pod state will suit for specified predicate.
+   * Waits until persistent volume claim state will suit for specified predicate.
    *
-   * @param name name of pod or deployment containing pod that should be watched
+   * @param name name of persistent volume claim that should be watched
    * @param timeoutMillis waiting timeout in milliseconds
    * @param predicate predicate to perform state check
-   * @return pod that satisfies the specified predicate
+   * @return persistent volume claim that satisfies the specified predicate
    * @throws InfrastructureException when specified timeout is reached
    * @throws InfrastructureException when {@link Thread} is interrupted while waiting
    * @throws InfrastructureException when any other exception occurs
