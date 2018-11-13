@@ -73,24 +73,6 @@ public class KubernetesPersistentVolumeClaims {
   }
 
   /**
-   * Returns existing persistent volume claim with specified name or null if was not found.
-   *
-   * @throws InfrastructureException when any exception occurs
-   */
-  public PersistentVolumeClaim get(String name) throws InfrastructureException {
-    try {
-      return clientFactory
-          .create(workspaceId)
-          .persistentVolumeClaims()
-          .inNamespace(namespace)
-          .withName(name)
-          .get();
-    } catch (KubernetesClientException e) {
-      throw new KubernetesInfrastructureException(e);
-    }
-  }
-
-  /**
    * Returns all existing persistent volume claims.
    *
    * @throws InfrastructureException when any exception occurs
