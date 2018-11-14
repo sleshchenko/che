@@ -27,8 +27,11 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ChePlugin;
+import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesConfigsMaps;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesDeployments;
@@ -50,9 +53,11 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class DeployBrokerTest {
 
-  public static final String PLUGIN_BROKER_POD_NAME = "pluginBrokerPodName";
+  private static final String PLUGIN_BROKER_POD_NAME = "pluginBrokerPodName";
+
   @Mock private BrokerPhase nextBrokerPhase;
 
+  @Mock private StartSynchronizer startSynchronizer;
   @Mock private KubernetesNamespace k8sNamespace;
   @Mock private KubernetesDeployments k8sDeployments;
   @Mock private KubernetesConfigsMaps k8sConfigMaps;
@@ -66,23 +71,29 @@ public class DeployBrokerTest {
 
   private List<ChePlugin> plugins = emptyList();
 
+  private CompletableFuture<Void> runningPodFuture;
+
   private DeployBroker deployBrokerPhase;
 
   @BeforeMethod
   public void setUp() throws Exception {
+    runningPodFuture = new CompletableFuture<>();
+
     deployBrokerPhase =
         new DeployBroker(
             "workspaceId",
             k8sNamespace,
             k8sEnvironment,
             brokersResult,
-            unrecoverableEventListenerFactory);
+            unrecoverableEventListenerFactory,
+            startSynchronizer);
     deployBrokerPhase.then(nextBrokerPhase);
 
     when(nextBrokerPhase.execute()).thenReturn(plugins);
 
     when(k8sNamespace.configMaps()).thenReturn(k8sConfigMaps);
     when(k8sNamespace.deployments()).thenReturn(k8sDeployments);
+    when(k8sDeployments.waitRunningAsync(any())).thenReturn(runningPodFuture);
 
     pod = new PodBuilder().withNewMetadata().withName(PLUGIN_BROKER_POD_NAME).endMetadata().build();
     when(k8sEnvironment.getPods()).thenReturn(ImmutableMap.of(PLUGIN_BROKER_POD_NAME, pod));
@@ -93,6 +104,9 @@ public class DeployBrokerTest {
 
   @Test
   public void shouldDeployPluginBrokerEnvironment() throws Exception {
+    // given
+    runningPodFuture.complete(null);
+
     // when
     List<ChePlugin> result = deployBrokerPhase.execute();
 
@@ -107,12 +121,38 @@ public class DeployBrokerTest {
     verify(k8sConfigMaps).delete();
   }
 
+  @Test(
+      expectedExceptions = InfrastructureException.class,
+      expectedExceptionsMessageRegExp = "failed to start")
+  public void shouldThrowExceptionIfPluginBrokerPodIsNotStartedInTime() throws Exception {
+    // given
+    runningPodFuture.completeExceptionally(new RuntimeException("failed to start"));
+
+    // given
+    when(startSynchronizer.getStartTimeoutMillis()).thenReturn(1L);
+
+    // when
+    deployBrokerPhase.execute();
+  }
+
+  @Test(
+      expectedExceptions = InfrastructureException.class,
+      expectedExceptionsMessageRegExp = "Waiting for pod 'pluginBrokerPodName' reached timeout")
+  public void shouldThrowExceptionIfPluginBrokerPodFailedToStart() throws Exception {
+    // given
+    when(startSynchronizer.getStartTimeoutMillis()).thenReturn(1L);
+
+    // when
+    deployBrokerPhase.execute();
+  }
+
   @Test
   public void shouldListenToUnrecoverableEventsIfFactoryIsConfigured() throws Exception {
     // given
     when(unrecoverableEventListenerFactory.isConfigured()).thenReturn(true);
     UnrecoverablePodEventListener listener = mock(UnrecoverablePodEventListener.class);
     when(unrecoverableEventListenerFactory.create(any(), any())).thenReturn(listener);
+    runningPodFuture.complete(null);
 
     // when
     deployBrokerPhase.execute();
@@ -127,6 +167,9 @@ public class DeployBrokerTest {
 
   @Test
   public void shouldDoNotListenToUnrecoverableEventsIfFactoryIsConfigured() throws Exception {
+    // given
+    runningPodFuture.complete(null);
+
     // given
     when(unrecoverableEventListenerFactory.isConfigured()).thenReturn(false);
 

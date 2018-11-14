@@ -20,9 +20,14 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Pod;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ChePlugin;
+import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesDeployments;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -50,23 +55,26 @@ public class DeployBroker extends BrokerPhase {
   private final BrokersResult brokersResult;
   private final UnrecoverablePodEventListenerFactory factory;
   private final String workspaceId;
+  private final StartSynchronizer startSynchronizer;
 
   public DeployBroker(
       String workspaceId,
       KubernetesNamespace namespace,
       KubernetesEnvironment brokerEnvironment,
       BrokersResult brokersResult,
-      UnrecoverablePodEventListenerFactory factory) {
+      UnrecoverablePodEventListenerFactory factory,
+      StartSynchronizer startSynchronizer) {
     this.workspaceId = workspaceId;
     this.namespace = namespace;
     this.brokerEnvironment = brokerEnvironment;
     this.brokersResult = brokersResult;
     this.factory = factory;
+    this.startSynchronizer = startSynchronizer;
   }
 
   @Override
   public List<ChePlugin> execute() throws InfrastructureException {
-    LOG.debug("Starting brokers deployment for workspace '{}'", workspaceId);
+    LOG.debug("Starting brokers pod for workspace '{}'", workspaceId);
     KubernetesDeployments deployments = namespace.deployments();
     try {
       // Creates config map that can inject Che tooling plugins meta files into a Che plugin
@@ -87,8 +95,10 @@ public class DeployBroker extends BrokerPhase {
 
       Pod barePod = deployments.create(pluginBrokerPod);
 
-      deployments.waitRunningAsync(barePod.getMetadata().getName());
-      LOG.debug("Brokers deployment finished for workspace '{}'", workspaceId);
+      LOG.debug(
+          "Brokers pod for workspace `{}` is created. Waiting it to be RUNNING.", workspaceId);
+      waitRunning(barePod);
+      LOG.debug("Brokers pod started for workspace '{}'", workspaceId);
       return nextPhase.execute();
     } finally {
       namespace.deployments().stopWatch();
@@ -103,6 +113,24 @@ public class DeployBroker extends BrokerPhase {
         LOG.error(
             "Broker deployment config map removal failed. Error: " + ex.getLocalizedMessage(), ex);
       }
+    }
+  }
+
+  private void waitRunning(Pod pluginBrokersPod) throws InfrastructureException {
+    String name = pluginBrokersPod.getMetadata().getName();
+    CompletableFuture<Void> runningPodFuture = namespace.deployments().waitRunningAsync(name);
+    try {
+      runningPodFuture.get(startSynchronizer.getStartTimeoutMillis(), TimeUnit.MILLISECONDS);
+    } catch (ExecutionException e) {
+      runningPodFuture.cancel(true);
+      throw new InfrastructureException(e.getCause().getMessage(), e);
+    } catch (TimeoutException e) {
+      runningPodFuture.cancel(true);
+      throw new InfrastructureException("Waiting for pod '" + name + "' reached timeout");
+    } catch (InterruptedException e) {
+      runningPodFuture.cancel(true);
+      Thread.currentThread().interrupt();
+      throw new InfrastructureException("Waiting for pod '" + name + "' was interrupted");
     }
   }
 

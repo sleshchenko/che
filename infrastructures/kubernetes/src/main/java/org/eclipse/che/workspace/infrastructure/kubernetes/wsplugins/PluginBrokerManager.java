@@ -109,7 +109,11 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
     WaitBrokerResult waitBrokerResult = getWaitBrokerPhase(workspaceId, brokersResult);
     DeployBroker deployBroker =
         getDeployBrokerPhase(
-            runtimeID.getWorkspaceId(), kubernetesNamespace, brokerEnvironment, brokersResult);
+            runtimeID.getWorkspaceId(),
+            kubernetesNamespace,
+            brokerEnvironment,
+            brokersResult,
+            startSynchronizer);
     LOG.debug("Entering plugin brokers deployment chain workspace '{}'", workspaceId);
     listenBrokerEvents.then(prepareStorage).then(deployBroker).then(waitBrokerResult);
     return listenBrokerEvents.execute();
@@ -130,13 +134,15 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
       String workspaceId,
       KubernetesNamespace kubernetesNamespace,
       KubernetesEnvironment brokerEnvironment,
-      BrokersResult brokersResult) {
+      BrokersResult brokersResult,
+      StartSynchronizer startSynchronizer) {
     return new DeployBroker(
         workspaceId,
         kubernetesNamespace,
         brokerEnvironment,
         brokersResult,
-        unrecoverablePodEventListenerFactory);
+        unrecoverablePodEventListenerFactory,
+        startSynchronizer);
   }
 
   private WaitBrokerResult getWaitBrokerPhase(String workspaceId, BrokersResult brokersResult) {
