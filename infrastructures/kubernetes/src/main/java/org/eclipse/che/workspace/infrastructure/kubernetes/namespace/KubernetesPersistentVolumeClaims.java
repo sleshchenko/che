@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
 
@@ -213,9 +214,15 @@ public class KubernetesPersistentVolumeClaims {
       try {
         return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
       } catch (ExecutionException e) {
-        throw new InfrastructureException(e.getCause().getMessage(), e);
+        // May happen only if WebSocket Connection is closed before needed event received.
+        // Throw internal exception because there may be some cluster/network issues that admin
+        // should take a look.
+        throw new InternalInfrastructureException(e.getCause().getMessage(), e);
       } catch (TimeoutException e) {
-        throw new InfrastructureException(
+        // May happen when PVC is not bound in the time.
+        // Throw internal exception because there may be some cluster configuration/performance
+        // issues that admin should take a look.
+        throw new InternalInfrastructureException(
             "Waiting for persistent volume claim '" + name + "' reached timeout");
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
