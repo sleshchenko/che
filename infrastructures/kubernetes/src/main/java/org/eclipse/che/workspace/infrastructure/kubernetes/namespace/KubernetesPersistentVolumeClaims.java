@@ -150,7 +150,7 @@ public class KubernetesPersistentVolumeClaims {
   }
 
   /**
-   * Waits until persistent volume claim state will bound.
+   * Waits until persistent volume claim state is bound.
    *
    * @param name name of persistent volume claim that should be watched
    * @param timeoutMillis waiting timeout in milliseconds
