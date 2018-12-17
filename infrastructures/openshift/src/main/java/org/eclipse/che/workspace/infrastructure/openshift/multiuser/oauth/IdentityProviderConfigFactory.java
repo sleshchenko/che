@@ -19,10 +19,14 @@ import com.google.inject.Provider;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
@@ -60,11 +64,8 @@ public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory 
   private final String oauthIdentityProvider;
 
   private final KeycloakServiceClient keycloakServiceClient;
-  private final KeycloakSettings keycloakSettings;
   private final Provider<WorkspaceRuntimes> workspaceRuntimeProvider;
   private final String messageToLinkAccount;
-
-  private String rootUrl;
 
   @Inject
   public IdentityProviderConfigFactory(
@@ -75,21 +76,8 @@ public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory 
       @Named("che.api") String apiEndpoint) {
     super();
     this.keycloakServiceClient = keycloakServiceClient;
-    this.keycloakSettings = keycloakSettings;
     this.workspaceRuntimeProvider = workspaceRuntimeProvider;
-
     this.oauthIdentityProvider = oauthIdentityProvider;
-    rootUrl = apiEndpoint;
-    if (rootUrl.endsWith("/")) {
-      rootUrl = rootUrl.substring(0, rootUrl.length() - 1);
-    }
-    if (rootUrl.endsWith("/api")) {
-      rootUrl = rootUrl.substring(0, rootUrl.length() - 4);
-    }
-
-    String referrer_uri =
-        rootUrl.replace("http://", "http%3A%2F%2F").replace("https://", "https%3A%2F%2F")
-            + "%2Fdashboard%2F?redirect_fragment%3D%2Fworkspaces";
 
     messageToLinkAccount =
         "You should link your account with the <strong>"
@@ -103,70 +91,98 @@ public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory 
             + "/account/identity?referrer="
             + keycloakSettings.get().get(CLIENT_ID_SETTING)
             + "&referrer_uri="
-            + referrer_uri
+            + buildReferrerURI(apiEndpoint)
             + "' target='_blank' rel='noopener noreferrer'><strong>Federated Identities</strong></a> page of your Che account";
   }
 
+  private String buildReferrerURI(String apiEndpoint) {
+    URI referrerURI =
+        UriBuilder.fromUri(apiEndpoint)
+            .path("dashboard")
+            .queryParam("redirect_fragment", "/workspaces")
+            .build();
+    try {
+      return URLEncoder.encode(referrerURI.toString(), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(
+          "Error occurred during constructing Referrer URI. " + e.getMessage(), e);
+    }
+  }
+
   /**
-   * Builds the Openshift {@link Config} object based on a default {@link Config} object and an
+   * Builds the OpenShift {@link Config} object based on a default {@link Config} object and an
    * optional workspace Id.
    */
   public Config buildConfig(Config defaultConfig, @Nullable String workspaceId)
       throws InfrastructureException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
 
+    if (oauthIdentityProvider == null) {
+      LOG.debug("OAuth Provider is not configured, default config is used.");
+      return defaultConfig;
+    }
+
     String workspaceOwnerId = null;
     if (workspaceId != null) {
-      @SuppressWarnings("rawtypes")
       Optional<RuntimeContext> context =
           workspaceRuntimeProvider.get().getRuntimeContext(workspaceId);
       workspaceOwnerId = context.map(c -> c.getIdentity().getOwnerId()).orElse(null);
     }
 
-    if (oauthIdentityProvider != null
-        && subject != Subject.ANONYMOUS
-        && (workspaceOwnerId == null || subject.getUserId().equals(workspaceOwnerId))) {
-      try {
-        KeycloakTokenResponse keycloakTokenInfos =
-            keycloakServiceClient.getIdentityProviderToken(oauthIdentityProvider);
-        if ("user:full".equals(keycloakTokenInfos.getScope())) {
-          return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
-              .withOauthToken(keycloakTokenInfos.getAccessToken())
-              .build();
-        } else {
-          throw new InfrastructureException(
-              "Cannot retrieve user Openshift token: '"
-                  + oauthIdentityProvider
-                  + "' identity provider is not granted full rights: "
-                  + oauthIdentityProvider);
-        }
-      } catch (UnauthorizedException e) {
-        LOG.error("cannot retrieve User Openshift token from the identity provider", e);
+    boolean isRuntimeOwner =
+        subject != Subject.ANONYMOUS
+            && (workspaceOwnerId == null || subject.getUserId().equals(workspaceOwnerId));
 
-        throw new InfrastructureException(messageToLinkAccount);
-      } catch (BadRequestException e) {
-        LOG.error(
-            "cannot retrieve User Openshift token from the '"
-                + oauthIdentityProvider
-                + "' identity provider",
-            e);
-        if (e.getMessage().endsWith("Invalid token.")) {
-          throw new InfrastructureException(
-              "Your session has expired. \nPlease "
-                  + "<a href='javascript:location.reload();' target='_top'>"
-                  + "login"
-                  + "</a> to Che again to get access to your Openshift account");
-        }
-        throw new InfrastructureException(e.getMessage(), e);
-      } catch (Exception e) {
-        LOG.error(
-            "cannot retrieve User Openshift token from the  '"
-                + oauthIdentityProvider
-                + "' identity provider",
-            e);
-        throw new InfrastructureException(e.getMessage(), e);
-      }
+    if (!isRuntimeOwner) {
+      LOG.debug(
+          "OAuth Provider is configured, but current subject is not runtime owner, default config is used."
+              + "Subject user id: '{}'. Runtime owner id: '{}'",
+          subject.getUserId(),
+          workspaceOwnerId);
+      return defaultConfig;
     }
-    return defaultConfig;
+
+    LOG.debug(
+        "OAuth Provider is configured and current subject is runtime owner. OAuth token will be retrieved.");
+    try {
+      KeycloakTokenResponse keycloakTokenInfos =
+          keycloakServiceClient.getIdentityProviderToken(oauthIdentityProvider);
+      if ("user:full".equals(keycloakTokenInfos.getScope())) {
+        return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
+            .withOauthToken(keycloakTokenInfos.getAccessToken())
+            .build();
+      } else {
+        throw new InfrastructureException(
+            "Cannot retrieve user OpenShift token: '"
+                + oauthIdentityProvider
+                + "' identity provider is not granted full rights: "
+                + oauthIdentityProvider);
+      }
+    } catch (UnauthorizedException e) {
+      LOG.error("Cannot retrieve User OpenShift token from the identity provider", e);
+
+      throw new InfrastructureException(messageToLinkAccount);
+    } catch (BadRequestException e) {
+      LOG.error(
+          "Cannot retrieve User OpenShift token from the '"
+              + oauthIdentityProvider
+              + "' identity provider",
+          e);
+      if (e.getMessage().endsWith("Invalid token.")) {
+        throw new InfrastructureException(
+            "Your session has expired. \nPlease "
+                + "<a href='javascript:location.reload();' target='_top'>"
+                + "login"
+                + "</a> to Che again to get access to your OpenShift account");
+      }
+      throw new InfrastructureException(e.getMessage(), e);
+    } catch (Exception e) {
+      LOG.error(
+          "Cannot retrieve User OpenShift token from the  '"
+              + oauthIdentityProvider
+              + "' identity provider",
+          e);
+      throw new InfrastructureException(e.getMessage(), e);
+    }
   }
 }
