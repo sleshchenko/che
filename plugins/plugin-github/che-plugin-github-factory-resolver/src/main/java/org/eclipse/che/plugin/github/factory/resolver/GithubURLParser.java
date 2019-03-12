@@ -29,13 +29,40 @@ public class GithubURLParser {
   /** Fetcher to grab PR data */
   @Inject private URLFetcher urlFetcher;
 
+  /** Regexp to match protocol `http(s)://` */
+  private static final String PROTOCOL_PATTERN = "(?:http)(?:s)?(?:\\:\\/\\/)";
+  /** Regexp to match user which should be the first segment */
+  private static final String USER_PATTERN = "(?<repoUser>[^/]++)";
+  /** Regexp to match repo which should be the first segment */
+  private static final String REPO_NAME = "(?<repoName>[^/]++)";
+  /**
+   * Regexp to match pull request ID, like in the following URL
+   * https://github.com/eclipse/che/pull/12860
+   */
+  private static final String PULL_PULL_REQUEST_ID = "(/pull/(?<pullRequestId>[^/]++))";
+  /**
+   * Regexp to match repo path which includes branch name and subfolder, like in the following URL
+   * https://github.com/eclipse/che/tree/master/deploy/kubernetes
+   */
+  private static final String REPO_PATH = "(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)";
+
   /**
    * Regexp to find repository details (repository name, project name and branch and subfolder)
    * Examples of valid URLs are in the test class.
    */
   protected static final Pattern GITHUB_PATTERN =
       Pattern.compile(
-          "^(?:http)(?:s)?(?:\\:\\/\\/)github.com/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$");
+          "^"
+              + PROTOCOL_PATTERN
+              + "github.com/"
+              + USER_PATTERN
+              + "/"
+              + REPO_NAME
+              + "((/)|"
+              + REPO_PATH
+              + "|"
+              + PULL_PULL_REQUEST_ID
+              + ")?$");
 
   /** Regexp to find repository and branch name from PR link */
   protected static final Pattern PR_DATA_PATTERN =

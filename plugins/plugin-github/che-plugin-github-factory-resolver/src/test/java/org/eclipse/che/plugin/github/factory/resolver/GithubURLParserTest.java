@@ -72,6 +72,7 @@ public class GithubURLParserTest {
   public Object[][] urls() {
     return new Object[][] {
       {"https://github.com/eclipse/che"},
+      {"https://github.com/eclipse/che/"},
       {"https://github.com/eclipse/che/tree/4.2.x"},
       {"https://github.com/eclipse/che/tree/master/"},
       {"https://github.com/eclipse/che/tree/master/dashboard/"},
