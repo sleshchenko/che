@@ -21,6 +21,7 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -77,7 +78,16 @@ public class TestService extends Service {
   @POST
   @Path("/application-json")
   @Produces(APPLICATION_JSON)
+  @Consumes(APPLICATION_JSON)
   public List<Link> receiveJsonObject(List<Link> elements) {
+    return elements;
+  }
+
+  @POST
+  @Path("/application-json")
+  @Consumes("application/yaml")
+  @Produces("application/yaml")
+  public List<Link> receiveYamlObject(List<Link> elements) {
     return elements;
   }
 
