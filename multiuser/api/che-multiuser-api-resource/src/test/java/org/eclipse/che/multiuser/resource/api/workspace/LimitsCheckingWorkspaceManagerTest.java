@@ -270,7 +270,7 @@ public class LimitsCheckingWorkspaceManagerTest {
               environmentRamCalculator,
               resourceManager,
               null,
-              null));
+              null, devfileRamCalculator));
     }
 
     ManagerBuilder setMaxRamPerEnv(String maxRamPerEnv) {
