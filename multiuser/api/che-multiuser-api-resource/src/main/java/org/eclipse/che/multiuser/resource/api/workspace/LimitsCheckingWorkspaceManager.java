@@ -31,6 +31,7 @@ import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
+import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
@@ -38,6 +39,7 @@ import org.eclipse.che.api.workspace.server.WorkspaceValidator;
 import org.eclipse.che.api.workspace.server.devfile.convert.DevfileConverter;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.annotation.Traced;
@@ -49,6 +51,7 @@ import org.eclipse.che.multiuser.resource.api.type.RuntimeResourceType;
 import org.eclipse.che.multiuser.resource.api.type.WorkspaceResourceType;
 import org.eclipse.che.multiuser.resource.api.usage.ResourceManager;
 import org.eclipse.che.multiuser.resource.api.usage.ResourcesLocks;
+import org.eclipse.che.multiuser.resource.api.usage.tracker.DevfileRamCalculator;
 import org.eclipse.che.multiuser.resource.api.usage.tracker.EnvironmentRamCalculator;
 import org.eclipse.che.multiuser.resource.model.Resource;
 import org.eclipse.che.multiuser.resource.spi.impl.ResourceImpl;
@@ -66,6 +69,7 @@ import org.eclipse.che.multiuser.resource.spi.impl.ResourceImpl;
 public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
 
   private final EnvironmentRamCalculator environmentRamCalculator;
+  private final DevfileRamCalculator devfileRamCalculator;
   private final ResourceManager resourceManager;
   private final ResourcesLocks resourcesLocks;
   private final AccountManager accountManager;
@@ -84,13 +88,14 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       EnvironmentRamCalculator environmentRamCalculator,
       ResourceManager resourceManager,
       ResourcesLocks resourcesLocks,
-      DevfileConverter devfileConverter) {
+      DevfileRamCalculator devfileRamCalculator) {
     super(workspaceDao, runtimes, eventService, accountManager, workspaceValidator);
     this.environmentRamCalculator = environmentRamCalculator;
     this.maxRamPerEnvMB = "-1".equals(maxRamPerEnv) ? -1 : Size.parseSizeToMegabytes(maxRamPerEnv);
     this.resourceManager = resourceManager;
     this.resourcesLocks = resourcesLocks;
     this.accountManager = accountManager;
+    this.devfileRamCalculator = devfileRamCalculator;
   }
 
   @Override
@@ -114,13 +119,19 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       throws NotFoundException, ServerException, ConflictException {
     WorkspaceImpl workspace = this.getWorkspace(workspaceId);
     String accountId = workspace.getAccount().getId();
-    WorkspaceConfigImpl config = workspace.getConfig();
 
     try (@SuppressWarnings("unused")
         Unlocker u = resourcesLocks.lock(accountId)) {
       checkRuntimeResourceAvailability(accountId);
+
+      WorkspaceConfigImpl config = workspace.getConfig();
       if (config != null) {
         checkRamResourcesAvailability(accountId, workspace.getNamespace(), config, envName);
+      }
+
+      DevfileImpl devfile = workspace.getDevfile();
+      if (devfile != null) {
+        checkRamResourcesAvailability(accountId, workspace.getNamespace(), devfile);
       }
 
       return super.startWorkspace(workspaceId, envName, options);
@@ -190,10 +201,43 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
     }
   }
 
-  @VisibleForTesting
+  void checkRamResourcesAvailability(String accountId, String namespace, Devfile devfile)
+      throws NotFoundException, ServerException {
+    final ResourceImpl ramToUse =
+        new ResourceImpl(
+            RamResourceType.ID,
+            devfileRamCalculator.calculate(devfile),
+            RamResourceType.UNIT);
+    try {
+      resourceManager.checkResourcesAvailability(accountId, singletonList(ramToUse));
+    } catch (NoEnoughResourcesException e) {
+      final Resource requiredRam =
+          e.getRequiredResources().get(0); // starting of workspace requires only RAM resource
+      final Resource availableRam =
+          getResourceOrDefault(
+              e.getAvailableResources(), RamResourceType.ID, 0, RamResourceType.UNIT);
+      final Resource usedRam =
+          getResourceOrDefault(
+              resourceManager.getUsedResources(accountId),
+              RamResourceType.ID,
+              0,
+              RamResourceType.UNIT);
+
+      throw new LimitExceededException(
+          format(
+              "Workspace %s/%s needs %s to start. Your account has %s available and %s in use. "
+                  + "The workspace can't be start. Stop other workspaces or grant more resources.",
+              namespace,
+              devfile.getName(),
+              printResourceInfo(requiredRam),
+              printResourceInfo(availableRam),
+              printResourceInfo(usedRam)));
+    }
+  }
+    @VisibleForTesting
   void checkRamResourcesAvailability(
       String accountId, String namespace, WorkspaceConfig config, @Nullable String envName)
-      throws NotFoundException, ServerException, ConflictException {
+      throws NotFoundException, ServerException {
     if (config.getEnvironments().isEmpty()) {
       return;
     }
