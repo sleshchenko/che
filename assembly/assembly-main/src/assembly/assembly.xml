@@ -24,15 +24,6 @@
             <useProjectArtifact>false</useProjectArtifact>
             <unpack>false</unpack>
             <outputDirectory>tomcat/webapps</outputDirectory>
-            <outputFileNameMapping>docs.war</outputFileNameMapping>
-            <includes>
-                <include>org.eclipse.che.docs:che-docs</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>tomcat/webapps</outputDirectory>
             <outputFileNameMapping>ROOT.war</outputFileNameMapping>
             <includes>
                 <include>org.eclipse.che:assembly-root-war</include>
@@ -42,44 +33,9 @@
             <useProjectArtifact>false</useProjectArtifact>
             <unpack>false</unpack>
             <outputDirectory>tomcat/webapps</outputDirectory>
-            <outputFileNameMapping>api.war</outputFileNameMapping>
-            <includes>
-                <include>org.eclipse.che:assembly-wsmaster-war</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>tomcat/webapps</outputDirectory>
-            <outputFileNameMapping>dashboard.war</outputFileNameMapping>
+            <outputFileNameMapping>dashboard-next.war</outputFileNameMapping>
             <includes>
                 <include>org.eclipse.che.dashboard:che-dashboard-war</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>tomcat/webapps</outputDirectory>
-            <outputFileNameMapping>workspace-loader.war</outputFileNameMapping>
-            <includes>
-                <include>org.eclipse.che:assembly-workspace-loader-war</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>tomcat/webapps</outputDirectory>
-            <outputFileNameMapping>swagger.war</outputFileNameMapping>
-            <includes>
-                <include>org.eclipse.che:assembly-swagger-war</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>lib</outputDirectory>
-            <includes>
-                <include>org.postgresql:postgresql</include>
             </includes>
         </dependencySet>
     </dependencySets>

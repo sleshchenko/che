@@ -169,7 +169,7 @@
                                         <!-- Change base HREF of the application that will be hosted on /dashboard -->
                                         <replace file="${basedir}/target/dist/index.html">
                                             <replacetoken><![CDATA[<base href="/">]]></replacetoken>
-                                            <replacevalue><![CDATA[<base href="/dashboard/">]]></replacevalue>
+                                            <replacevalue><![CDATA[<base href="/dashboard-next/">]]></replacevalue>
                                         </replace>
                                     </target>
                                 </configuration>

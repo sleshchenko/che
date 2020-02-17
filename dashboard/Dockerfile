@@ -23,9 +23,12 @@ COPY package.json /dashboard/
 COPY yarn.lock /dashboard/
 WORKDIR /dashboard
 RUN yarn install --ignore-optional
+
 COPY . /dashboard/
+RUN chmod -R a+rwX /dashboard/
 
-RUN yarn build && yarn test
+RUN yarn build
 RUN cd /dashboard/target/ && tar zcf /tmp/dashboard.tar.gz dist/
+RUN chown -R 777 /dashboard
 
-CMD zcat /tmp/dashboard.tar.gz
+

@@ -39,7 +39,7 @@ public class DashboardRedirectionFilter implements Filter {
     HttpServletResponse resp = (HttpServletResponse) response;
 
     if ("GET".equals(req.getMethod()) && !projectPattern.matcher(req.getRequestURI()).matches()) {
-      resp.sendRedirect("/dashboard/");
+      resp.sendRedirect("/dashboard-next/");
       return;
     }
     chain.doFilter(request, response);

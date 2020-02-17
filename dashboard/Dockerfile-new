@@ -1,0 +1,18 @@
+FROM quay.io/eclipse/che-dashboard-dev:nightly
+
+USER 0
+
+RUN mkdir -p /dashboard
+
+COPY . /dashboard
+
+RUN chmod -R a+rwX /dashboard/
+
+WORKDIR /dashboard
+
+RUN yarn && yarn install --ignore-optional && yarn build
+
+RUN chmod -R a+rwX /dashboard/
+
+ENTRYPOINT ["node_modules/.bin/gulp serve"]
+
